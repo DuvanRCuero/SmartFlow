@@ -10,25 +10,30 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-/** Main home screen with top bar, bottom nav, and scrollable content. */
+/**
+ * Home screen with logout, bottom navigation, and themed colors.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -38,18 +43,27 @@ fun HomeScreen(
     onTasksClick: () -> Unit,
     onProductivityClick: () -> Unit,
     onBottomNavSelect: (HomeTab) -> Unit,
-    selectedTab: HomeTab
+    selectedTab: HomeTab,
+    onLogoutClick: () -> Unit      // <-- Nuevo parámetro
 ) {
     val colors = MaterialTheme.colorScheme
 
     Scaffold(
+        containerColor = colors.background,
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "¡Hello, $userName!",
-                        color = colors.onPrimary
-                    )
+                    Text("¡Hola, $userName!", color = colors.onPrimary)
+                },
+                // ← ADD THIS ACTIONS SLOT
+                actions = {
+                    IconButton(onClick = onLogoutClick) {
+                        Icon(
+                            imageVector   = Icons.Default.Logout,
+                            contentDescription = "Cerrar sesión",
+                            tint          = colors.onPrimary
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colors.primary
@@ -65,19 +79,18 @@ fun HomeScreen(
                     NavigationBarItem(
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
                         label = { Text(tab.label) },
-                        selected = tab == selectedTab,
+                        selected = (tab == selectedTab),
                         onClick = { onBottomNavSelect(tab) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor   = colors.onPrimary,
+                            selectedIconColor = colors.onPrimary,
                             unselectedIconColor = colors.onPrimary.copy(alpha = 0.6f),
-                            selectedTextColor   = colors.onPrimary,
+                            selectedTextColor = colors.onPrimary,
                             unselectedTextColor = colors.onPrimary.copy(alpha = 0.6f)
                         )
                     )
                 }
             }
-        },
-        containerColor = colors.background
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -92,16 +105,16 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 QuickCard(
-                    "Chat",
-                    Icons.Filled.Chat,
+                    label = "Chat",
+                    icon = Icons.Filled.Chat,
                     modifier = Modifier.weight(1f),
                     onClick = onChatClick,
                     cardColor = colors.surface,
                     contentColor = colors.onSurface
                 )
                 QuickCard(
-                    "Calendario",
-                    Icons.Filled.CalendarToday,
+                    label = "Calendario",
+                    icon = Icons.Filled.CalendarToday,
                     modifier = Modifier.weight(1f),
                     onClick = onCalendarClick,
                     cardColor = colors.surface,
@@ -114,16 +127,16 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 QuickCard(
-                    "Tareas",
-                    Icons.Filled.List,
+                    label = "Tareas",
+                    icon = Icons.Filled.List,
                     modifier = Modifier.weight(1f),
                     onClick = onTasksClick,
                     cardColor = colors.surface,
                     contentColor = colors.onSurface
                 )
                 QuickCard(
-                    "Productividad",
-                    Icons.Filled.BarChart,
+                    label = "Productividad",
+                    icon = Icons.Filled.BarChart,
                     modifier = Modifier.weight(1f),
                     onClick = onProductivityClick,
                     cardColor = colors.surface,
@@ -188,17 +201,17 @@ fun HomeScreen(
     }
 }
 
-/** A tappable card with an icon and label. */
 @Composable
-private fun QuickCard(
+private fun RowScope.QuickCard(
     label: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    cardColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color
+    cardColor: Color,
+    contentColor: Color
 ) {
     Card(
+        shape = MaterialTheme.shapes.medium,
         modifier = modifier
             .height(100.dp)
             .clickable(onClick = onClick),
@@ -208,8 +221,8 @@ private fun QuickCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(12.dp),
-            verticalArrangement   = Arrangement.Center,
-            horizontalAlignment   = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
@@ -227,13 +240,12 @@ private fun QuickCard(
     }
 }
 
-/** A single upcoming‐item row with title/time and an arrow icon. */
 @Composable
 private fun UpcomingItem(
     title: String,
     time: String,
-    cardColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color
+    cardColor: Color,
+    contentColor: Color
 ) {
     Card(
         shape = MaterialTheme.shapes.small,
@@ -244,28 +256,27 @@ private fun UpcomingItem(
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.bodyLarge, color = contentColor)
-                Text(time,  style = MaterialTheme.typography.bodySmall, color = contentColor)
+                Text(time, style = MaterialTheme.typography.bodySmall, color = contentColor)
             }
             Icon(
                 imageVector = Icons.Filled.List,
                 contentDescription = "Detalles",
-                tint = colors.primary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
         }
     }
 }
 
-/** Tabs for the bottom NavigationBar. */
 enum class HomeTab(val label: String, val icon: ImageVector) {
-    Chat        ("Chat",        Icons.Filled.Chat),
-    Calendar    ("Calendario",  Icons.Filled.CalendarToday),
-    Tasks       ("Tareas",      Icons.Filled.List),
+    Chat("Chat", Icons.Filled.Chat),
+    Calendar("Calendario", Icons.Filled.CalendarToday),
+    Tasks("Tareas", Icons.Filled.List),
     Productivity("Productividad", Icons.Filled.BarChart)
 }
