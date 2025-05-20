@@ -126,7 +126,10 @@ fun TaskItem(
 
             if (showAddButton) {
                 IconButton(
-                    onClick = { /* Add functionality */ },
+                    onClick = { 
+                        // TODO: Implement add task functionality
+                        println("Add button clicked") 
+                    },
                     modifier = Modifier
                         .size(32.dp)
                         .background(SmartFlowTeal, RoundedCornerShape(16.dp))
