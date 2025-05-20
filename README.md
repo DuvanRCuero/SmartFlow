@@ -135,7 +135,7 @@ com.example.smartflow
 ## Entrega Sprint 1
 
 - **Commit de entrega**: `git commit -m "Sprint1: autenticación básica (registro, login, Home)"`
-    - Ejemplo de link: https://github.com/tuUsuario/smartflow2/commit/abcdef012345
+    - Ejemplo de link: https://github.com/DuvanRCuero/SmartFlow/commit/649368cf80454c0f505eb7622ca87e88f38df71c
 - **Tag**: `v1.0-sprint1` → `git tag -a v1.0-sprint1 -m "Sprint 1: autenticación básica"`
 - **APK de depuración**: `app/build/outputs/apk/debug/app-debug.apk`
 - **Demo en video**: muestra flujo de registro y login con al menos dos usuarios.
