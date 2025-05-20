@@ -17,32 +17,21 @@ import com.example.smartflow.presentation.home.HomeScreen
 import com.example.smartflow.presentation.home.HomeTab
 import kotlinx.coroutines.launch
 
-
-sealed class Screen(val route: String) {
-    object Login        : Screen("login")
-    object Signup       : Screen("signup")
-    object Dashboard    : Screen("dashboard")
-    object Chat         : Screen("chat")
-    object Calendar     : Screen("calendar")
-    object Productivity : Screen("productivity")
-    object Task         : Screen("task")
-}
-
 @Composable
 fun AppNavigation(
     authRepository: AuthRepository,
     navController: NavHostController = rememberNavController()
 ) {
-    val scope      = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     val isLoggedIn by authRepository.isLoggedIn().collectAsState(initial = false)
 
     NavHost(
-        navController    = navController,
+        navController = navController,
         startDestination = if (isLoggedIn) Screen.Dashboard.route else Screen.Login.route
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess     = {
+                onLoginSuccess = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -55,7 +44,7 @@ fun AppNavigation(
 
         composable(Screen.Signup.route) {
             SignupScreen(
-                onSignupSuccess   = {
+                onSignupSuccess = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Signup.route) { inclusive = true }
                     }
@@ -66,30 +55,30 @@ fun AppNavigation(
             )
         }
 
-        // Dashboard con HomeScreen + logout
+        // Dashboard with HomeScreen + logout
         composable(Screen.Dashboard.route) {
-            // determinar tab activo:
+            // Determine active tab:
             val navBackStack by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStack?.destination?.route
             val selectedTab = when (currentRoute) {
-                Screen.Chat.route         -> HomeTab.Chat
-                Screen.Calendar.route     -> HomeTab.Calendar
+                Screen.Chat.route -> HomeTab.Chat
+                Screen.Calendar.route -> HomeTab.Calendar
                 Screen.Productivity.route -> HomeTab.Productivity
-                Screen.Task.route         -> HomeTab.Tasks
-                else                      -> HomeTab.Tasks
+                Screen.Task.route -> HomeTab.Tasks
+                else -> HomeTab.Tasks
             }
 
             HomeScreen(
-                userName            = "Usuario", // o úsalo dinámico
-                onChatClick         = { navController.navigate(Screen.Chat.route) },
-                onCalendarClick     = { navController.navigate(Screen.Calendar.route) },
-                onTasksClick        = { navController.navigate(Screen.Task.route) },
+                userName = "User", // Changed to English for consistency
+                onChatClick = { navController.navigate(Screen.Chat.route) },
+                onCalendarClick = { navController.navigate(Screen.Calendar.route) },
+                onTasksClick = { navController.navigate(Screen.Task.route) },
                 onProductivityClick = { navController.navigate(Screen.Productivity.route) },
-                onBottomNavSelect   = { tab ->
+                onBottomNavSelect = { tab ->
                     when (tab) {
-                        HomeTab.Chat         -> navController.navigate(Screen.Chat.route)
-                        HomeTab.Calendar     -> navController.navigate(Screen.Calendar.route)
-                        HomeTab.Tasks        -> navController.navigate(Screen.Task.route)
+                        HomeTab.Chat -> navController.navigate(Screen.Chat.route)
+                        HomeTab.Calendar -> navController.navigate(Screen.Calendar.route)
+                        HomeTab.Tasks -> navController.navigate(Screen.Task.route)
                         HomeTab.Productivity -> navController.navigate(Screen.Productivity.route)
                     }
                 },
@@ -105,9 +94,28 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.Chat.route)         { ChatScreen() }
-        composable(Screen.Calendar.route)     { CalendarScreen() }
-        composable(Screen.Productivity.route) { ProductivityScreen() }
-        composable(Screen.Task.route)         { TaskScreen() }
+        composable(Screen.Chat.route) {
+            ChatScreen(
+                onBackClick = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.Calendar.route) {
+            CalendarScreen(
+                onBackClick = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.Productivity.route) {
+            ProductivityScreen(
+                onBackClick = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.Task.route) {
+            TaskScreen(
+                onBackClick = { navController.navigateUp() }
+            )
+        }
     }
 }
