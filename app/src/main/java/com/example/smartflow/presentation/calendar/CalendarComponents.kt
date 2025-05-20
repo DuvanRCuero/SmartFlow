@@ -71,7 +71,8 @@ fun CalendarView(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             val daysInMonth = 31
-            val startOffset = 3 // Wednesday is the first day
+            val firstDayOfMonth = 3 // Example: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            val startOffset = (firstDayOfMonth - firstDayOfWeek + 7) % 7
 
             // Empty cells for offset
             items(startOffset) {
