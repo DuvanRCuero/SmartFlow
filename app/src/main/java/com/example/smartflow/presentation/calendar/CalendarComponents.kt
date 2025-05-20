@@ -1,6 +1,7 @@
 package com.example.smartflow.presentation.calendar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -21,7 +22,12 @@ import com.example.smartflow.presentation.common.SmartFlowCard
 import com.example.smartflow.presentation.theme.*
 
 @Composable
-fun CalendarView() {
+fun CalendarView(
+    monthProgress: Float,
+    weekProgress: Float,
+    selectedDay: Int,
+    onDaySelected: (Int) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -29,7 +35,7 @@ fun CalendarView() {
     ) {
         // Month progress indicator
         LinearProgressIndicator(
-            progress = 0.6f,
+            progress = monthProgress,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
@@ -75,13 +81,14 @@ fun CalendarView() {
             // Days of the month
             items(daysInMonth) { day ->
                 val currentDay = day + 1
-                val isSelected = currentDay == 15 // Example: day 15 is selected
+                val isSelected = currentDay == selectedDay
 
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(if (isSelected) SmartFlowButtonBlue else Color.Transparent),
+                        .background(if (isSelected) SmartFlowButtonBlue else Color.Transparent)
+                        .clickable { onDaySelected(currentDay) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -96,7 +103,7 @@ fun CalendarView() {
 
         // Week progress indicator
         LinearProgressIndicator(
-            progress = 0.4f,
+            progress = weekProgress,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
@@ -110,7 +117,8 @@ fun CalendarView() {
 @Composable
 fun EventItem(
     title: String,
-    time: String
+    time: String,
+    isAlert: Boolean = false
 ) {
     SmartFlowCard(
         modifier = Modifier.fillMaxWidth()
@@ -135,7 +143,7 @@ fun EventItem(
                 )
             }
 
-            if (title == "Project Meeting") {
+            if (!isAlert) {
                 IconButton(
                     onClick = { /* Add functionality */ },
                     modifier = Modifier

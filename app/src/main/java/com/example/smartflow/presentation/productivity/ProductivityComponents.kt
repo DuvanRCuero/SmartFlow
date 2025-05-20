@@ -1,5 +1,6 @@
 package com.example.smartflow.presentation.productivity
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,21 +8,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.smartflow.presentation.common.SmartFlowCard
 import com.example.smartflow.presentation.theme.*
 
-data class TimeBlock(
-    val title: String,
-    val timeRange: String
-)
-
 @Composable
 fun TimeBlockCard(
     title: String,
     timeRange: String,
-    icon: String
+    iconResId: Int
 ) {
     SmartFlowCard(
         modifier = Modifier.fillMaxWidth()
@@ -32,17 +29,26 @@ fun TimeBlockCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // In a real app, this would be an actual icon
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(LightGray, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = icon.first().toString(),
-                    color = BackgroundDark
+            // In a real app, use the actual icon from resources
+            if (iconResId != 0) {
+                Image(
+                    painter = painterResource(id = iconResId),
+                    contentDescription = title,
+                    modifier = Modifier.size(40.dp)
                 )
+            } else {
+                // Placeholder if no icon is available
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(LightGray, RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title.first().toString(),
+                        color = BackgroundDark
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))

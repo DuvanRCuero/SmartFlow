@@ -14,13 +14,6 @@ import com.example.smartflow.presentation.theme.BackgroundDark
 import com.example.smartflow.presentation.theme.SmartFlowTeal
 import com.example.smartflow.presentation.theme.White
 
-data class ChatMessage(
-    val id: String,
-    val content: String,
-    val isFromUser: Boolean,
-    val timestamp: Long
-)
-
 @Composable
 fun ChatMessageItem(message: ChatMessage) {
     Column(
