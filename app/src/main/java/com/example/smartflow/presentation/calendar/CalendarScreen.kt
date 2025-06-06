@@ -21,12 +21,13 @@ fun CalendarScreen(
         title = "Calendar",
         onBackClick = onBackClick
     ) {
-        // Calendar view
+        // Pass in firstDayOfWeek (e.g. 1 = Monday)
         CalendarView(
             monthProgress = monthProgress,
             weekProgress = weekProgress,
             selectedDay = selectedDay,
-            onDaySelected = { calendarViewModel.selectDay(it) }
+            onDaySelected = { calendarViewModel.selectDay(it) },
+            firstDayOfWeek = 1
         )
 
         // Events list

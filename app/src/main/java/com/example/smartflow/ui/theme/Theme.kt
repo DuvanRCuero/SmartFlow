@@ -1,71 +1,54 @@
-package com.example.smartflow.presentation.theme
+package com.example.smartflow.ui.theme
 
-import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.smartflow.R
 
-// Your color definitions (in the same package)
-import com.example.smartflow.presentation.theme.SmartFlowTeal
-import com.example.smartflow.presentation.theme.SmartFlowButtonBlue
-import com.example.smartflow.presentation.theme.BackgroundDark
-import com.example.smartflow.presentation.theme.White
-import com.example.smartflow.presentation.theme.Black
-
-// Your typography & shapes
-import com.example.smartflow.presentation.theme.Typography
-import com.example.smartflow.presentation.theme.Shapes
-
-private val DarkColorScheme = darkColorScheme(
-    primary        = SmartFlowTeal,
-    secondary      = SmartFlowButtonBlue,
-    background     = BackgroundDark,
-    surface        = White,
-    onPrimary      = White,
-    onSecondary    = White,
-    onBackground   = White,
-    onSurface      = Black
+private val Inter = FontFamily(
+    Font(R.font.inter_regular,  FontWeight.Normal),
+    Font(R.font.inter_medium,   FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold,     FontWeight.Bold),
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary        = SmartFlowTeal,
-    secondary      = SmartFlowButtonBlue,
-    background     = White,
-    surface        = White,
-    onPrimary      = White,
-    onSecondary    = White,
-    onBackground   = Black,
-    onSurface      = Black
+private val LightScheme = lightColorScheme(
+    primary        = BluePrimary,
+    onPrimary      = Color.White,
+    surface        = Color.White,
+    onSurface      = Color(0xFF1B1F29),
+    surfaceVariant = GreyLightBg,
+    outline        = GreyStroke,
+    secondary      = GreyIcon,
+    tertiary       = SuccessGreen,
+    error          = ErrorRed
 )
 
 @Composable
 fun SmartFlowTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    useDarkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor =
-                BackgroundDark.toArgb()
-            WindowCompat.getInsetsController(window, view)
-                .isAppearanceLightStatusBars = false
-        }
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography  = Typography,
-        shapes      = Shapes,
-        content     = content
+        colorScheme = LightScheme, // swap with darkScheme if needed
+        typography  = Typography(
+            bodyLarge      = MaterialTheme.typography.bodyLarge.copy(fontFamily = Inter),
+            bodyMedium     = MaterialTheme.typography.bodyMedium.copy(fontFamily = Inter),
+            bodySmall      = MaterialTheme.typography.bodySmall.copy(fontFamily = Inter),
+            titleLarge     = MaterialTheme.typography.titleLarge.copy(fontFamily = Inter),
+            titleMedium    = MaterialTheme.typography.titleMedium.copy(fontFamily = Inter),
+            labelLarge     = MaterialTheme.typography.labelLarge.copy(fontFamily = Inter)
+        ),
+        shapes = Shapes(
+            small  = RoundedCornerShape(8.dp),
+            medium = RoundedCornerShape(12.dp),
+            large  = RoundedCornerShape(20.dp)
+        ),
+        content = content
     )
 }

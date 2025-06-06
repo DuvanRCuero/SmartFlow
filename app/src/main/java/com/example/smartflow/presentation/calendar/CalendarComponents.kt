@@ -26,7 +26,8 @@ fun CalendarView(
     monthProgress: Float,
     weekProgress: Float,
     selectedDay: Int,
-    onDaySelected: (Int) -> Unit
+    onDaySelected: (Int) -> Unit,
+    firstDayOfWeek: Int    // <— NEW parameter: 0 = Sunday, 1 = Monday, …, 6 = Saturday
 ) {
     Column(
         modifier = Modifier
@@ -51,6 +52,8 @@ fun CalendarView(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Adjust labels if you want the first day to be Monday instead of Sunday.
+            // For simplicity, this example just hardcodes Sun–Sat:
             listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
                 Text(
                     text = day,
@@ -72,6 +75,8 @@ fun CalendarView(
         ) {
             val daysInMonth = 31
             val firstDayOfMonth = 3 // Example: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+            // Compute how many blank cells to show before “1”
             val startOffset = (firstDayOfMonth - firstDayOfWeek + 7) % 7
 
             // Empty cells for offset
@@ -80,8 +85,8 @@ fun CalendarView(
             }
 
             // Days of the month
-            items(daysInMonth) { day ->
-                val currentDay = day + 1
+            items(daysInMonth) { index ->
+                val currentDay = index + 1
                 val isSelected = currentDay == selectedDay
 
                 Box(
@@ -114,6 +119,7 @@ fun CalendarView(
         )
     }
 }
+
 
 @Composable
 fun EventItem(

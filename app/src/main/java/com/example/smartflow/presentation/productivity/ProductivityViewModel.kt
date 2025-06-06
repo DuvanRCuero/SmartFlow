@@ -26,31 +26,31 @@ class ProductivityViewModel : ViewModel() {
                 id = "1",
                 title = "Morning",
                 timeRange = "9:00 AM - 12:00 PM",
-                iconResId = MISSING_ICON // Placeholder for missing icon resources
+                iconResId = 0 // Placeholder for missing icon resources
             ),
             TimeBlock(
                 id = "2",
                 title = "Afternoon",
                 timeRange = "12:00 PM - 5:00 PM",
-                iconResId = MISSING_ICON // Placeholder for missing icon resources
+                iconResId = 0 // Placeholder for missing icon resources
             ),
             TimeBlock(
                 id = "3",
                 title = "Evening",
                 timeRange = "5:00 PM - 9:00 PM",
-                iconResId = MISSING_ICON // Placeholder for missing icon resources
+                iconResId = 0 // Placeholder for missing icon resources
             ),
             TimeBlock(
                 id = "4",
                 title = "Night",
                 timeRange = "9:00 PM - 10:00 PM",
-                iconResId = MISSING_ICON // Placeholder for missing icon resources
+                iconResId = 0 // Placeholder for missing icon resources
             ),
             TimeBlock(
                 id = "5",
                 title = "Late Night",
                 timeRange = "10:00 PM - 12:00 AM",
-                iconResId = MISSING_ICON // Placeholder for missing icon resources
+                iconResId = 0 // Placeholder for missing icon resources
             )
         )
     )

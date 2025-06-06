@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.example.smartflow.presentation.home.HomeTab
+
 
 /**
  * Home screen with logout, bottom navigation, and themed colors.
@@ -272,11 +274,4 @@ private fun UpcomingItem(
             )
         }
     }
-}
-
-enum class HomeTab(val label: String, val icon: ImageVector) {
-    Chat("Chat", Icons.Filled.Chat),
-    Calendar("Calendario", Icons.Filled.CalendarToday),
-    Tasks("Tareas", Icons.Filled.List),
-    Productivity("Productividad", Icons.Filled.BarChart)
 }
