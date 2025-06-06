@@ -9,8 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.smartflow.presentation.theme.BackgroundDark
-import com.example.smartflow.presentation.theme.White
+import com.example.smartflow.ui.theme.White
+
 
 /**
  * Common scaffold for screen content with consistent header styling
@@ -26,7 +26,7 @@ fun ScreenScaffold(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()

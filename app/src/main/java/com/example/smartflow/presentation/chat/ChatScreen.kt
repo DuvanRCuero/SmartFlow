@@ -1,86 +1,99 @@
 package com.example.smartflow.presentation.chat
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material3.*
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.smartflow.presentation.common.ScreenScaffold
-import com.example.smartflow.presentation.theme.BackgroundDark
-import com.example.smartflow.presentation.theme.SmartFlowTeal
-import com.example.smartflow.presentation.theme.White
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.smartflow.presentation.common.SfBottomBar
+import com.example.smartflow.presentation.navigation.SfDestination
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    onBackClick: () -> Unit = {},
-    chatViewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit,
+    onSelectBottom: (SfDestination) -> Unit
 ) {
-    val messages by chatViewModel.messages.collectAsState()
-    val messageText by chatViewModel.messageText.collectAsState()
+    val ui by viewModel.ui.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    ScreenScaffold(
-        title = "Plan a Project Meeting",
-        onBackClick = onBackClick
-    ) {
-        // Chat messages
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(messages) { message ->
-                ChatMessageItem(message = message)
-            }
+    ui.error?.let { err ->
+        LaunchedEffect(err) { scope.launch { snackbar.showSnackbar(err) } }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
+        topBar = {
+            TopAppBar(            //  ← cambia aquí
+                title = { Text("Chat") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Outlined.ArrowBack, null)
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            SfBottomBar(SfDestination.Chat, onSelectBottom)
         }
-
-        // Chat input
-        Row(
+    ) { pv ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(pv)
+                .fillMaxSize()
         ) {
-            TextField(
-                value = messageText,
-                onValueChange = { chatViewModel.updateMessageText(it) },
+            // Mensajes
+            LazyColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(24.dp)),
-                placeholder = { Text("Type a message") },
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = White,
-                    focusedContainerColor = White,
-                    unfocusedTextColor = BackgroundDark,
-                    focusedTextColor = BackgroundDark
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = { chatViewModel.sendMessage() },
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(SmartFlowTeal, shape = RoundedCornerShape(24.dp))
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Send message",
-                    tint = White
-                )
+                items(ui.messages) { ChatBubble(it) }
             }
+
+            // Input
+            var input by remember { mutableStateOf("") }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BasicTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                IconButton(
+                    onClick = {
+                        viewModel.sendMessage(input)
+                        input = ""
+                    },
+                    enabled = input.isNotBlank() && !ui.loading
+                ) {
+                    Icon(Icons.Outlined.Send, null)
+                }
+            }
+
+            if (ui.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
 }

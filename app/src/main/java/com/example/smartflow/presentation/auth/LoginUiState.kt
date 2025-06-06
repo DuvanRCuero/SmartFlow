@@ -1,10 +1,13 @@
 package com.example.smartflow.presentation.auth
 
-import com.example.smartflow.domain.model.User
-
-sealed class LoginUiState {
-    object Initial : LoginUiState()
-    object Loading : LoginUiState()
-    data class Success(val user: User) : LoginUiState()
-    data class Error(val message: String) : LoginUiState()
+data class LoginUiState(
+    val email: String        = "",
+    val password: String     = "",
+    val loading: Boolean     = false,
+    val error: String?       = null
+) {
+    val canLogin: Boolean
+        get() = email.isNotBlank()
+                && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                && password.length >= 6
 }

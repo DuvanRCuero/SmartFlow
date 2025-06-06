@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android") version "2.48"
     id("kotlin-parcelize")
 }
@@ -20,21 +20,23 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Room schema location
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += mapOf("room.schemaLocation" to "$projectDir/schemas")
-            }
+        // Room schema location for KSP
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "DEBUG", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("boolean", "DEBUG", "false")
         }
     }
     compileOptions {
@@ -46,6 +48,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
@@ -88,12 +91,14 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.androidx.databinding.adapters)
     implementation(libs.navigation.compose)
-    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.room.runtime.android)
+    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.material3)
 
     // Room Database
     implementation(libs.androidx.room.runtime)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
     // Retrofit for Network Requests
@@ -125,4 +130,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // ---- Timber ----
+    implementation(libs.timber)
+
+    // ---- Retrofit HTTP logging (only for Debug) ----
+    debugImplementation(libs.logging.interceptor.v500alpha12)
 }

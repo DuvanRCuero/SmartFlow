@@ -2,6 +2,7 @@ package com.example.smartflow.di
 
 import android.content.Context
 import androidx.room.Room
+import com.example.smartflow.BuildConfig
 import com.example.smartflow.data.local.AppDatabase
 import com.example.smartflow.data.local.dao.UserDao
 import com.example.smartflow.data.local.preferences.AuthPreferences
@@ -30,7 +31,10 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import timber.log.Timber
 import javax.inject.Singleton
 
 @Module
@@ -70,21 +74,29 @@ object AppModule {
     // ------------------------------------------------------------
     // 3) Retrofit + APIs remotas
     // ------------------------------------------------------------
-    @Provides
-    @Singleton
-    fun provideRetrofit(): Retrofit {
-        // Configuramos Kotlinx Serialization para JSON
-        val contentType = "application/json".toMediaType()
-        val json = Json {
-            ignoreUnknownKeys = true
-            isLenient = true
-        }
-
-        return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8000/")   // Apunta a FastAPI local en emulador Android
-            .addConverterFactory(json.asConverterFactory(contentType))
+    @Provides @Singleton
+    fun provideRetrofit(okHttp: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:8000/")
+            .client(okHttp)                    // ← usa el cliente con logging
+            .addConverterFactory(
+                Json.asConverterFactory("application/json".toMediaType())
+            )
             .build()
+
+    @Provides @Singleton
+    fun provideOkHttpClient(): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+
+        if (BuildConfig.DEBUG) {
+            val logging = HttpLoggingInterceptor { message -> Timber.tag("OkHttp").d(message) }
+            logging.level = HttpLoggingInterceptor.Level.BODY
+            builder.addInterceptor(logging)
+        }
+        return builder.build()
     }
+
+
 
     @Provides
     @Singleton

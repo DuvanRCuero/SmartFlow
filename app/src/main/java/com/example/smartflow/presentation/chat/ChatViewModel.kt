@@ -1,51 +1,50 @@
 package com.example.smartflow.presentation.chat
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.smartflow.data.remote.dto.AgentResponse
+import com.example.smartflow.data.remote.repository.AgentRepository
+import com.example.smartflow.util.Resource
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-data class ChatMessage(
-    val id: String,
-    val content: String,
-    val isFromUser: Boolean,
-    val timestamp: Long
-)
+@HiltViewModel
+class ChatViewModel @Inject constructor(
+    private val agentRepo: AgentRepository
+) : ViewModel() {
 
-class ChatViewModel : ViewModel() {
-    private val _messages = MutableStateFlow<List<ChatMessage>>(
-        listOf(
-            ChatMessage(
-                id = "1",
-                content = "Scheduling a project meeting at your usual meeting time 1:30 to 2:30, let me know if you want any modifications to this meeting",
-                isFromUser = false,
-                timestamp = System.currentTimeMillis()
-            )
+    private val _ui = MutableStateFlow(ChatUiState())
+    val ui: StateFlow<ChatUiState> = _ui
+
+    fun sendMessage(txt: String) = viewModelScope.launch {
+        if (txt.isBlank()) return@launch
+
+        _ui.value = _ui.value.copy(
+            messages = _ui.value.messages + ChatMessage(txt, true)
         )
-    )
-    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
 
-    private val _messageText = MutableStateFlow("")
-    val messageText: StateFlow<String> = _messageText.asStateFlow()
+        _ui.value = _ui.value.copy(loading = true, error = null)
 
-    fun updateMessageText(text: String) {
-        _messageText.value = text
-    }
+        val res: Resource<AgentResponse> = agentRepo.runAgent(txt, taskId = null)
 
-    fun sendMessage() {
-        val currentText = messageText.value
-        if (currentText.isNotEmpty()) {
-            val newMessage = ChatMessage(
-                id = System.currentTimeMillis().toString(),
-                content = currentText,
-                isFromUser = true,
-                timestamp = System.currentTimeMillis()
-            )
-            _messages.update { currentMessages ->
-                currentMessages + newMessage
+        when (res) {
+            is Resource.Success -> {
+                val reply = res.data?.result?.get("raw")?.toString() ?: "…"
+                _ui.value = _ui.value.copy(
+                    messages = _ui.value.messages + ChatMessage(reply, false),
+                    loading = false
+                )
             }
-            _messageText.value = ""
+            is Resource.Error -> {
+                _ui.value = _ui.value.copy(
+                    loading = false,
+                    error = res.message ?: "Error"
+                )
+            }
+            Resource.Loading -> Unit
         }
     }
 }

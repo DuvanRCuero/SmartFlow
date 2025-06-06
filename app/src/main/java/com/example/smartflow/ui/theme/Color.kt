@@ -16,3 +16,13 @@ val ErrorRed      = Color(0xFFE14D48)
 // Dark palette – adjust if you’ll support dark mode
 val DarkSurface   = Color(0xFF11161E)
 val DarkBg        = Color(0xFF0C1017)
+
+// Paleta principal
+val SmartFlowButtonBlue = Color(0xFF3A80E4)
+val SmartFlowTeal       = Color(0xFF37B37E)
+
+// Grises / neutros
+val White      = Color(0xFFFFFFFF)
+val Gray       = Color(0xFF8E9AAC)
+
+

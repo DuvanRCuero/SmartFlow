@@ -9,15 +9,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.smartflow.domain.repository.AuthRepository
 import com.example.smartflow.presentation.navigation.AppNavigation
-import com.example.smartflow.presentation.theme.SmartFlowTheme
+import com.example.smartflow.ui.theme.SmartFlowTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject
-    lateinit var authRepository: AuthRepository
+    @Inject lateinit var authRepository: AuthRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +26,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     AppNavigation(authRepository = authRepository)
                 }
             }

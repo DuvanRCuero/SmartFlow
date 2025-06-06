@@ -1,173 +1,256 @@
-package com.example.smartflow.presentation.auth
+// LoginScreen.kt
+package com.example.smartflow.presentation.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.smartflow.presentation.common.SmartFlowCard
-import com.example.smartflow.presentation.common.SmartFlowCheckmark
-import com.example.smartflow.presentation.theme.BackgroundDark
-import com.example.smartflow.presentation.theme.Gray
-import com.example.smartflow.presentation.theme.White
+import com.example.smartflow.ui.theme.*
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onNavigateToSignup: () -> Unit,
-    viewModel: LoginViewModel = hiltViewModel()
+    onSuccess: () -> Unit,
+    onNavigateToSignup: () -> Unit = {}
 ) {
-    val uiState      by viewModel.uiState.collectAsState()
-    val email        by viewModel.email.collectAsState()
-    val password     by viewModel.password.collectAsState()
-    val emailError   by viewModel.emailError.collectAsState()
-    val passwordError by viewModel.passwordError.collectAsState()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) {
-            onLoginSuccess()
+    // Handle login simulation with LaunchedEffect
+    var shouldLogin by remember { mutableStateOf(false) }
+
+    LaunchedEffect(shouldLogin) {
+        if (shouldLogin) {
+            loading = true
+            error = null
+            try {
+                // Simulate network delay
+                delay(1500)
+                loading = false
+                shouldLogin = false
+                onSuccess()
+            } catch (e: Exception) {
+                loading = false
+                shouldLogin = false
+                error = "Login failed. Please try again."
+            }
         }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
-            .padding(16.dp),
+            .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Header
-            Text(
-                text = "Login",
-                color = White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            shape = RoundedCornerShape(32.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                textAlign = TextAlign.Left
-            )
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(Modifier.height(24.dp))
 
-            SmartFlowCard {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Logo
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(SmartFlowTeal),
+                    contentAlignment = Alignment.Center
                 ) {
-                    SmartFlowCheckmark(size = 56, modifier = Modifier.padding(vertical = 16.dp))
-                    Text(
-                        text = "SmartFlow",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 32.dp)
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "SmartFlow Logo",
+                        tint = Color.White,
+                        modifier = Modifier.size(40.dp)
                     )
+                }
 
-                    if (uiState is LoginUiState.Error) {
-                        Text(
-                            text = (uiState as LoginUiState.Error).message,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                    }
+                Spacer(Modifier.height(24.dp))
 
+                // App Name
+                Text(
+                    "SmartFlow",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+
+                Spacer(Modifier.height(48.dp))
+
+                // Email Field
+                Column {
                     OutlinedTextField(
                         value = email,
-                        onValueChange = viewModel::updateEmail,
-                        label = { Text("Email") },
-                        isError = emailError != null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        onValueChange = { email = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color.Black,
+                            focusedLabelColor = Color.Transparent,
+                            unfocusedLabelColor = Color.Transparent,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
                         singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = if (emailError != null) 4.dp else 16.dp)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        label = null
                     )
-                    if (emailError != null) {
-                        Text(
-                            text = emailError!!,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp, start = 4.dp)
-                        )
-                    }
 
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = viewModel::updatePassword,
-                        label = { Text("Password") },
-                        isError = passwordError != null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = if (passwordError != null) 4.dp else 16.dp)
-                    )
-                    if (passwordError != null) {
-                        Text(
-                            text = passwordError!!,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp, start = 4.dp)
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Forgot Password?",
-                        color = Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .padding(bottom = 16.dp)
-                            .clickable { /* TODO */ }
+                        text = "Email",
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Password Field
+                Column {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color.Black,
+                            focusedLabelColor = Color.Transparent,
+                            unfocusedLabelColor = Color.Transparent,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        label = null
                     )
 
-                    // Log in button
-                    Button(
-                        onClick = viewModel::login,
-                        enabled = uiState !is LoginUiState.Loading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Password",
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Forgot Password
+                Text(
+                    "Forgot Password?",
+                    color = SmartFlowButtonBlue,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .clickable { /* TODO: Navigate to forgot password */ }
+                        .padding(vertical = 8.dp)
+                )
+
+                Spacer(Modifier.height(32.dp))
+
+                // Login Button
+                Button(
+                    onClick = {
+                        shouldLogin = true
+                    },
+                    enabled = email.isNotBlank() && password.isNotBlank() && !loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SmartFlowButtonBlue,
+                        disabledContainerColor = SmartFlowButtonBlue.copy(alpha = 0.6f)
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    if (loading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
                         )
-                    ) {
-                        if (uiState is LoginUiState.Loading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Log in", color = White)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // ← NEW: Register link
-                    TextButton(onClick = onNavigateToSignup) {
-                        Text("¿No tienes cuenta? Regístrate", color = MaterialTheme.colorScheme.primary)
+                    } else {
+                        Text(
+                            text = "Log in",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Sign up link
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Don't have an account? ",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        "Sign up",
+                        color = SmartFlowButtonBlue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable { onNavigateToSignup() }
+                    )
+                }
+
+                // Error message
+                error?.let {
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        it,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(Modifier.height(24.dp))
             }
         }
     }

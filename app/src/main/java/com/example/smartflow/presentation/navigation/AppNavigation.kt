@@ -1,120 +1,140 @@
+// Updated AppNavigation.kt
 package com.example.smartflow.presentation.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.smartflow.domain.repository.AuthRepository
-import com.example.smartflow.presentation.auth.LoginScreen
+import com.example.smartflow.presentation.login.LoginScreen
 import com.example.smartflow.presentation.auth.SignupScreen
-import com.example.smartflow.presentation.chat.ChatScreen
 import com.example.smartflow.presentation.calendar.CalendarScreen
-import com.example.smartflow.presentation.task.TaskScreen
-import com.example.smartflow.presentation.productivity.ProductivityScreen
+import com.example.smartflow.presentation.chat.ChatScreen
 import com.example.smartflow.presentation.home.HomeScreen
-import com.example.smartflow.presentation.home.HomeTab
-import kotlinx.coroutines.launch
+import com.example.smartflow.presentation.productivity.ProductivityScreen
+import com.example.smartflow.presentation.task.TaskScreen
 
 @Composable
 fun AppNavigation(
     authRepository: AuthRepository,
     navController: NavHostController = rememberNavController()
 ) {
-    val scope = rememberCoroutineScope()
-    val isLoggedIn by authRepository.isLoggedIn().collectAsState(initial = false)
+    /* ➊ Escucha el estado de sesión (Flow→State) */
+    val isLoggedIn by authRepository
+        .isLoggedIn()              // Flow<Boolean>
+        .collectAsState(initial = false)
+
+    /* ➋ Ruta inicial dinámica */
+    val startDestination = if (isLoggedIn) SfDestination.Home.route
+    else AuthDestination.Login.route
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) Screen.Dashboard.route else Screen.Login.route
+        startDestination = startDestination
     ) {
-        composable(Screen.Login.route) {
+
+        /* -------- Auth Screens -------- */
+        composable(AuthDestination.Login.route) {
             LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                onSuccess = {
+                    navController.navigate(SfDestination.Home.route) {
+                        popUpTo(AuthDestination.Login.route) { inclusive = true }
                     }
                 },
                 onNavigateToSignup = {
-                    navController.navigate(Screen.Signup.route)
+                    navController.navigate(AuthDestination.Signup.route)
                 }
             )
         }
 
-        composable(Screen.Signup.route) {
+        composable(AuthDestination.Signup.route) {
             SignupScreen(
-                onSignupSuccess = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Signup.route) { inclusive = true }
+                onSuccess = {
+                    navController.navigate(SfDestination.Home.route) {
+                        popUpTo(AuthDestination.Signup.route) { inclusive = true }
                     }
                 },
                 onNavigateToLogin = {
-                    navController.popBackStack(Screen.Login.route, false)
+                    navController.popBackStack()
                 }
             )
         }
 
-        // Dashboard with HomeScreen + logout
-        composable(Screen.Dashboard.route) {
-            // Determine active tab:
-            val navBackStack by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStack?.destination?.route
-            val selectedTab = when (currentRoute) {
-                Screen.Chat.route -> HomeTab.Chat
-                Screen.Calendar.route -> HomeTab.Calendar
-                Screen.Productivity.route -> HomeTab.Productivity
-                Screen.Task.route -> HomeTab.Tasks
-                else -> HomeTab.Tasks
-            }
-
+        /* -------- Main App Screens -------- */
+        composable(SfDestination.Home.route) {
             HomeScreen(
-                userName = "User", // Changed to English for consistency
-                onChatClick = { navController.navigate(Screen.Chat.route) },
-                onCalendarClick = { navController.navigate(Screen.Calendar.route) },
-                onTasksClick = { navController.navigate(Screen.Task.route) },
-                onProductivityClick = { navController.navigate(Screen.Productivity.route) },
-                onBottomNavSelect = { tab ->
-                    when (tab) {
-                        HomeTab.Chat -> navController.navigate(Screen.Chat.route)
-                        HomeTab.Calendar -> navController.navigate(Screen.Calendar.route)
-                        HomeTab.Tasks -> navController.navigate(Screen.Task.route)
-                        HomeTab.Productivity -> navController.navigate(Screen.Productivity.route)
-                    }
-                },
-                selectedTab = selectedTab,
-                onLogoutClick = {
-                    scope.launch {
-                        authRepository.logout()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Dashboard.route) { inclusive = true }
+                onSelectBottom = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
                         }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
             )
         }
 
-        composable(Screen.Chat.route) {
+        composable(SfDestination.Chat.route) {
             ChatScreen(
-                onBackClick = { navController.navigateUp() }
+                onNavigateBack = { navController.popBackStack() },
+                onSelectBottom = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
-        composable(Screen.Calendar.route) {
+        composable(SfDestination.Calendar.route) {
             CalendarScreen(
-                onBackClick = { navController.navigateUp() }
+                onBack = { navController.popBackStack() },
+                onNavigateToDestination = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
-        composable(Screen.Productivity.route) {
-            ProductivityScreen(
-                onBackClick = { navController.navigateUp() }
-            )
-        }
-
-        composable(Screen.Task.route) {
+        composable(SfDestination.Tasks.route) {
             TaskScreen(
-                onBackClick = { navController.navigateUp() }
+                onBack = { navController.popBackStack() },
+                onSelectBottom = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+
+        composable(SfDestination.Productivity.route) {
+            ProductivityScreen(
+                onBack = { navController.popBackStack() },
+                onSelectBottom = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
     }

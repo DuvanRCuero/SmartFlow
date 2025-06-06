@@ -23,25 +23,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartflow.presentation.theme.SmartFlowTeal
-import com.example.smartflow.presentation.theme.White
+
 
 import androidx.compose.material3.CardDefaults
-
-@Composable
-fun SmartFlowCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        content()
-    }
-}
+import com.example.smartflow.ui.theme.SmartFlowTeal
+import com.example.smartflow.ui.theme.White
 
 
 @Composable

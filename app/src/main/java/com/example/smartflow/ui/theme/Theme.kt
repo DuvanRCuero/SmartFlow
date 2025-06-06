@@ -11,39 +11,36 @@ import androidx.compose.ui.unit.dp
 import com.example.smartflow.R
 
 private val Inter = FontFamily(
-    Font(R.font.inter_regular,  FontWeight.Normal),
-    Font(R.font.inter_medium,   FontWeight.Medium),
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
     Font(R.font.inter_semibold, FontWeight.SemiBold),
-    Font(R.font.inter_bold,     FontWeight.Bold),
+    Font(R.font.inter_bold, FontWeight.Bold)
 )
 
 private val LightScheme = lightColorScheme(
-    primary        = BluePrimary,
-    onPrimary      = Color.White,
-    surface        = Color.White,
-    onSurface      = Color(0xFF1B1F29),
+    primary = SmartFlowButtonBlue,
+    onPrimary = White,
+    surface = White,
+    onSurface = Color(0xFF1B1F29),
     surfaceVariant = GreyLightBg,
-    outline        = GreyStroke,
-    secondary      = GreyIcon,
-    tertiary       = SuccessGreen,
-    error          = ErrorRed
+    outline = GreyStroke,
+    secondary = Gray,
+    tertiary = SmartFlowTeal,
+    error = ErrorRed
 )
 
 @Composable
-fun SmartFlowTheme(
-    useDarkTheme: Boolean = false,
-    content: @Composable () -> Unit
-) {
+fun SmartFlowTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = LightScheme, // swap with darkScheme if needed
-        typography  = Typography(
-            bodyLarge      = MaterialTheme.typography.bodyLarge.copy(fontFamily = Inter),
-            bodyMedium     = MaterialTheme.typography.bodyMedium.copy(fontFamily = Inter),
-            bodySmall      = MaterialTheme.typography.bodySmall.copy(fontFamily = Inter),
-            titleLarge     = MaterialTheme.typography.titleLarge.copy(fontFamily = Inter),
-            titleMedium    = MaterialTheme.typography.titleMedium.copy(fontFamily = Inter),
-            labelLarge     = MaterialTheme.typography.labelLarge.copy(fontFamily = Inter)
-        ),
+        colorScheme = LightScheme,
+        typography = Typography().run {
+            copy(
+                bodyMedium = bodyMedium.copy(fontFamily = Inter),
+                bodySmall  = bodySmall.copy(fontFamily = Inter),
+                titleMedium = titleMedium.copy(fontFamily = Inter),
+                labelLarge  = labelLarge.copy(fontFamily = Inter)
+            )
+        },
         shapes = Shapes(
             small  = RoundedCornerShape(8.dp),
             medium = RoundedCornerShape(12.dp),
