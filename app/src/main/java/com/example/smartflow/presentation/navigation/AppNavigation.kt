@@ -94,18 +94,7 @@ fun AppNavigation(
         }
 
         composable(SfDestination.Calendar.route) {
-            CalendarScreen(
-                onBack = { navController.popBackStack() },
-                onNavigateToDestination = { destination ->
-                    navController.navigate(destination.route) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
+            CalendarScreen(onBack = { navController.popBackStack() })
         }
 
         composable(SfDestination.Tasks.route) {
