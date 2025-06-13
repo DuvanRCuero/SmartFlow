@@ -5,6 +5,7 @@ import com.example.smartflow.data.remote.dto.AgentRequest
 import com.example.smartflow.data.remote.dto.AgentResponse
 import com.example.smartflow.data.local.preferences.AuthPreferences
 import com.example.smartflow.util.Resource
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,16 +19,24 @@ class AgentRepositoryImpl @Inject constructor(
         query: String,
         taskId: String?
     ): Resource<AgentResponse> {
-
         return try {
-            val userId = prefs.getUserId()
+            // Get userId from Flow - use first() to get the current value
+            val userId = prefs.userId.first()
+
+            // Check if user is authenticated
+            if (userId.isNullOrEmpty()) {
+                return Resource.Error("User not authenticated")
+            }
+
             val req = AgentRequest(
                 user_id = userId,
                 task_id = taskId,
-                query   = query
+                query = query
             )
-            val resp = api.runAgent(req)          // <-- llamada Retrofit
-            Resource.Success(resp)                // envolver en Success
+
+            val resp = api.runAgent(req)
+            Resource.Success(resp)
+
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Network error")
         }

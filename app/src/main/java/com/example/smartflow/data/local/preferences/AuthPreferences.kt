@@ -1,4 +1,3 @@
-// data/local/preferences/AuthPreferences.kt - Add this method
 package com.example.smartflow.data.local.preferences
 
 import android.content.Context
@@ -22,7 +21,9 @@ class AuthPreferences(private val context: Context) {
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
     }
 
-    // Existing async methods
+    // ------------------------------------------------------------
+    // Save Methods
+    // ------------------------------------------------------------
     suspend fun saveAuthToken(token: String) {
         context.dataStore.edit { preferences ->
             preferences[TOKEN_KEY] = token
@@ -37,6 +38,18 @@ class AuthPreferences(private val context: Context) {
         }
     }
 
+    suspend fun saveCompleteAuth(token: String, userId: String, email: String, name: String) {
+        context.dataStore.edit { preferences ->
+            preferences[TOKEN_KEY] = token
+            preferences[USER_ID_KEY] = userId
+            preferences[USER_EMAIL_KEY] = email
+            preferences[USER_NAME_KEY] = name
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Flow-based getters (reactive)
+    // ------------------------------------------------------------
     val authToken: Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[TOKEN_KEY]
     }
@@ -45,6 +58,50 @@ class AuthPreferences(private val context: Context) {
         preferences[USER_ID_KEY]
     }
 
+    val userEmail: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_EMAIL_KEY]
+    }
+
+    val userName: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_NAME_KEY]
+    }
+
+    // ------------------------------------------------------------
+    // Synchronous getters (for interceptors and immediate use)
+    // ------------------------------------------------------------
+    fun getTokenSync(): String? {
+        return runBlocking {
+            try {
+                authToken.first()
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    fun getUserIdSync(): String? {
+        return runBlocking {
+            try {
+                userId.first()
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    fun getUserEmailSync(): String? {
+        return runBlocking {
+            try {
+                userEmail.first()
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Utility methods
+    // ------------------------------------------------------------
     suspend fun clearAuth() {
         context.dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)
@@ -55,17 +112,55 @@ class AuthPreferences(private val context: Context) {
     }
 
     suspend fun isLoggedIn(): Boolean {
-        return authToken.first() != null
+        return try {
+            val token = authToken.first()
+            val userId = userId.first()
+            !token.isNullOrEmpty() && !userId.isNullOrEmpty()
+        } catch (e: Exception) {
+            false
+        }
     }
 
-    // ADD THIS METHOD for synchronous token access in OkHttp interceptor
-    fun getTokenSync(): String? {
-        return runBlocking {
-            try {
-                authToken.first()
-            } catch (e: Exception) {
+    fun isLoggedInSync(): Boolean {
+        return try {
+            val token = getTokenSync()
+            val userId = getUserIdSync()
+            !token.isNullOrEmpty() && !userId.isNullOrEmpty()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Get complete user info
+    // ------------------------------------------------------------
+    suspend fun getCurrentUser(): UserInfo? {
+        return try {
+            val token = authToken.first()
+            val id = userId.first()
+            val email = userEmail.first()
+            val name = userName.first()
+
+            if (!token.isNullOrEmpty() && !id.isNullOrEmpty()) {
+                UserInfo(
+                    id = id,
+                    email = email ?: "",
+                    name = name ?: "",
+                    token = token
+                )
+            } else {
                 null
             }
+        } catch (e: Exception) {
+            null
         }
     }
 }
+
+// Data class for complete user info
+data class UserInfo(
+    val id: String,
+    val email: String,
+    val name: String,
+    val token: String
+)

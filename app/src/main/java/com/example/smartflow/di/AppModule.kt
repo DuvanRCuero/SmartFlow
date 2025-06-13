@@ -42,21 +42,21 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    companion object {
-        // Network Configuration - UPDATE WITH YOUR WINDOWS IP
-        private const val WINDOWS_IP = "192.168.56.1" 
-        private const val BASE_URL_EMULATOR = "http://10.0.2.2:8000/"
-        private const val BASE_URL_DEVICE = "http://$WINDOWS_IP:8000/"
+    // Network Configuration - UPDATE WITH YOUR WINDOWS IP
+    private const val WINDOWS_IP = "192.168.1.105" // Replace with your IP from ipconfig
+    private const val BASE_URL_EMULATOR = "http://10.0.2.2:8000/"
+    private const val BASE_URL_DEVICE = "http://$WINDOWS_IP:8000/"
 
-        private fun isEmulator(): Boolean {
-            return (android.os.Build.FINGERPRINT.startsWith("generic")
-                    || android.os.Build.FINGERPRINT.startsWith("unknown")
-                    || android.os.Build.MODEL.contains("google_sdk")
-                    || android.os.Build.MODEL.contains("Emulator")
-                    || android.os.Build.MODEL.contains("Android SDK built for x86"))
-        }
+    private fun isEmulator(): Boolean {
+        return (android.os.Build.FINGERPRINT.startsWith("generic")
+                || android.os.Build.FINGERPRINT.startsWith("unknown")
+                || android.os.Build.MODEL.contains("google_sdk")
+                || android.os.Build.MODEL.contains("Emulator")
+                || android.os.Build.MODEL.contains("Android SDK built for x86"))
+    }
 
-        private val BASE_URL = if (isEmulator()) BASE_URL_EMULATOR else BASE_URL_DEVICE
+    private fun getBaseUrl(): String {
+        return if (isEmulator()) BASE_URL_EMULATOR else BASE_URL_DEVICE
     }
 
     // ------------------------------------------------------------
@@ -90,22 +90,23 @@ object AppModule {
     }
 
     // ------------------------------------------------------------
-    // 3) Retrofit + APIs remotas with Authentication Interceptor
+    // 3) JSON Configuration
     // ------------------------------------------------------------
-    @Provides @Singleton
-    fun provideRetrofit(okHttp: OkHttpClient): Retrofit =
-        Retrofit.Builder()
-            .baseUrl(BASE_URL) // Use dynamic URL based on device type
-            .client(okHttp)
-            .addConverterFactory(
-                Json {
-                    ignoreUnknownKeys = true
-                    coerceInputValues = true
-                }.asConverterFactory("application/json".toMediaType())
-            )
-            .build()
+    @Provides
+    @Singleton
+    fun provideJson(): Json {
+        return Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+            isLenient = true
+        }
+    }
 
-    @Provides @Singleton
+    // ------------------------------------------------------------
+    // 4) OkHttp Client with Authentication
+    // ------------------------------------------------------------
+    @Provides
+    @Singleton
     fun provideOkHttpClient(authPreferences: AuthPreferences): OkHttpClient {
         val builder = OkHttpClient.Builder()
 
@@ -113,13 +114,12 @@ object AppModule {
         val authInterceptor = Interceptor { chain ->
             val originalRequest = chain.request()
 
-            // Get token from preferences (this will be synchronous for simplicity)
-            // In production, you might want to handle this differently
-            val token = runCatching {
-                // You'll need to implement a synchronous way to get token
-                // or use a different approach for auth headers
-                authPreferences.getTokenSync() // You'll need to implement this
-            }.getOrNull()
+            // Get token synchronously (you may need to implement this differently)
+            val token = try {
+                authPreferences.getTokenSync()
+            } catch (e: Exception) {
+                null
+            }
 
             val newRequest = if (!token.isNullOrEmpty()) {
                 originalRequest.newBuilder()
@@ -151,6 +151,24 @@ object AppModule {
         return builder.build()
     }
 
+    // ------------------------------------------------------------
+    // 5) Retrofit
+    // ------------------------------------------------------------
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttp: OkHttpClient, json: Json): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(getBaseUrl())
+            .client(okHttp)
+            .addConverterFactory(
+                json.asConverterFactory("application/json".toMediaType())
+            )
+            .build()
+    }
+
+    // ------------------------------------------------------------
+    // 6) API Interfaces
+    // ------------------------------------------------------------
     @Provides
     @Singleton
     fun provideAuthApi(retrofit: Retrofit): AuthApi =
@@ -177,7 +195,7 @@ object AppModule {
         retrofit.create(AgentApi::class.java)
 
     // ------------------------------------------------------------
-    // 4) Repositorios (inyectar implementaciones concretas)
+    // 7) Repositories
     // ------------------------------------------------------------
     @Provides
     @Singleton

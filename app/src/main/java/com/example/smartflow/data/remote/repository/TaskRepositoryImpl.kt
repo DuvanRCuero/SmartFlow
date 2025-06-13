@@ -1,65 +1,136 @@
+// Pattern 1: TaskRepositoryImpl.kt
 package com.example.smartflow.data.remote.repository
 
 import com.example.smartflow.data.remote.api.TaskApi
-import com.example.smartflow.data.remote.dto.CreateTaskDto
-import com.example.smartflow.data.remote.dto.TaskDto
-import com.example.smartflow.data.remote.dto.UpdateTaskDto
 import com.example.smartflow.data.local.preferences.AuthPreferences
+import com.example.smartflow.util.Resource
+import kotlinx.coroutines.flow.first
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class TaskRepositoryImpl(
+@Singleton
+class TaskRepositoryImpl @Inject constructor(
     private val api: TaskApi,
     private val prefs: AuthPreferences
 ) : TaskRepository {
 
-    override suspend fun getTasks(): List<TaskDto> {
-        val userId = prefs.getUserId()  // suponiendo que devuelva String
-        return api.getTasks(userId)
+    override suspend fun getTasks(): Resource<List<TaskResponse>> {
+        return try {
+            // Check authentication
+            val userId = prefs.userId.first()
+            if (userId.isNullOrEmpty()) {
+                return Resource.Error("User not authenticated")
+            }
+
+            val response = api.getTasks()
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to get tasks: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Network error")
+        }
     }
 
-    override suspend fun createTask(
-        title: String,
-        description: String?,
-        dueAt: String?,
-        estMinutes: Int?,
-        energyReq: String?,
-        priority: Int?
-    ): TaskDto {
-        val userId = prefs.getUserId()
-        val dto = CreateTaskDto(
-            user_id = userId,
-            title = title,
-            description = description,
-            due_at = dueAt,
-            est_minutes = estMinutes,
-            energy_req = energyReq,
-            priority = priority
-        )
-        return api.createTask(dto)
-    }
+    override suspend fun sendMessage(message: String): Resource<ChatResponse> {
+        return try {
+            val userId = prefs.userId.first()
+            if (userId.isNullOrEmpty()) {
+                return Resource.Error("User not authenticated")
+            }
 
-    override suspend fun updateTask(
-        taskId: String,
-        title: String?,
-        description: String?,
-        dueAt: String?,
-        estMinutes: Int?,
-        energyReq: String?,
-        priority: Int?,
-        state: String?
-    ): TaskDto {
-        val dto = UpdateTaskDto(
-            title = title,
-            description = description,
-            due_at = dueAt,
-            est_minutes = estMinutes,
-            energy_req = energyReq,
-            priority = priority,
-            state = state
-        )
-        return api.updateTask(taskId, dto)
-    }
+            val request = ChatRequest(message = message)
+            val response = api.sendMessage(request)
 
-    override suspend fun deleteTask(taskId: String) {
-        api.deleteTask(taskId)
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to send message: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Network error")
+        }
     }
 }
+
+// Pattern 2: LogRepositoryImpl.kt
+@Singleton
+class LogRepositoryImpl @Inject constructor(
+    private val api: LogApi,
+    private val prefs: AuthPreferences
+) : LogRepository {
+
+    override suspend fun getLogs(): Resource<List<LogResponse>> {
+        return try {
+            val userId = prefs.userId.first()
+            if (userId.isNullOrEmpty()) {
+                return Resource.Error("User not authenticated")
+            }
+
+            val response = api.getLogs()
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to get logs: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Network error")
+        }
+    }
+}
+
+// Pattern 3: SuggestionRepositoryImpl.kt
+@Singleton
+class SuggestionRepositoryImpl @Inject constructor(
+    private val api: SuggestionApi,
+    private val prefs: AuthPreferences
+) : SuggestionRepository {
+
+    override suspend fun getSuggestions(): Resource<List<SuggestionResponse>> {
+        return try {
+            val userId = prefs.userId.first()
+            if (userId.isNullOrEmpty()) {
+                return Resource.Error("User not authenticated")
+            }
+
+            val response = api.getSuggestions()
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to get suggestions: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Network error")
+        }
+    }
+}
+
+// Data classes you might need (create these if they don't exist)
+data class TaskResponse(
+    val id: String,
+    val title: String,
+    val description: String,
+    val status: String,
+    val priority: String,
+    val created_at: String
+)
+
+data class ChatRequest(val message: String)
+data class ChatResponse(
+    val response: String,
+    val user_id: String,
+    val timestamp: String
+)
+
+data class LogResponse(
+    val id: String,
+    val message: String,
+    val timestamp: String
+)
+
+data class SuggestionResponse(
+    val id: String,
+    val title: String,
+    val description: String
+)
