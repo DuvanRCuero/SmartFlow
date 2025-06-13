@@ -1,10 +1,22 @@
+// data/repository/AuthRepositoryImpl.kt
 package com.example.smartflow.data.repository
 
-import com.example.smartflow.data.remote.api.AuthApi
 import com.example.smartflow.data.local.dao.UserDao
 import com.example.smartflow.data.local.preferences.AuthPreferences
+import com.example.smartflow.data.remote.api.AuthApi
+import com.example.smartflow.data.remote.api.HealthResponse
+import com.example.smartflow.data.remote.api.LoginRequest
+import com.example.smartflow.data.remote.api.LoginResponse
+import com.example.smartflow.data.remote.api.RegisterRequest
+import com.example.smartflow.data.remote.api.TestUserResponse
+import com.example.smartflow.data.remote.api.UserResponse
 import com.example.smartflow.domain.repository.AuthRepository
 import com.example.smartflow.util.Resource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,18 +34,12 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
-
-                // Save auth data
                 prefs.saveCompleteAuth(
-                    token = loginResponse.token,
+                    token  = loginResponse.token,
                     userId = loginResponse.user.id,
-                    email = loginResponse.user.email,
-                    name = loginResponse.user.name
+                    email  = loginResponse.user.email,
+                    name   = loginResponse.user.name
                 )
-
-                // Optionally save to Room database
-                // userDao.insertUser(loginResponse.user.toEntity())
-
                 Resource.Success(loginResponse)
             } else {
                 Resource.Error("Login failed: ${response.message()}")
@@ -50,15 +56,12 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
-
-                // Save auth data
                 prefs.saveCompleteAuth(
-                    token = loginResponse.token,
+                    token  = loginResponse.token,
                     userId = loginResponse.user.id,
-                    email = loginResponse.user.email,
-                    name = loginResponse.user.name
+                    email  = loginResponse.user.email,
+                    name   = loginResponse.user.name
                 )
-
                 Resource.Success(loginResponse)
             } else {
                 Resource.Error("Registration failed: ${response.message()}")
@@ -70,13 +73,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun getProfile(): Resource<UserResponse> {
         return try {
-            // Check if user is authenticated
             if (!prefs.isLoggedIn()) {
                 return Resource.Error("User not authenticated")
             }
-
             val response = api.getProfile()
-
             if (response.isSuccessful && response.body() != null) {
                 Resource.Success(response.body()!!)
             } else {
@@ -89,26 +89,24 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun logout(): Resource<Unit> {
         return try {
-            // Clear local data
             prefs.clearAuth()
-            // Optionally clear Room database
-            // userDao.clearAll()
-
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Failed to logout")
         }
     }
 
-    override suspend fun isLoggedIn(): Boolean {
-        return prefs.isLoggedIn()
-    }
+    override fun isLoggedInFlow(): Flow<Boolean> =
+        flow {
+            emit(prefs.isLoggedIn())
+            // If your prefs can notify on changes you could collect that here
+        }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.IO)
 
-    // Health check method for testing
-    suspend fun healthCheck(): Resource<HealthResponse> {
+    override suspend fun healthCheck(): Resource<HealthResponse> {
         return try {
             val response = api.healthCheck()
-
             if (response.isSuccessful && response.body() != null) {
                 Resource.Success(response.body()!!)
             } else {
@@ -119,28 +117,19 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    // Test user creation for development
-    suspend fun createTestUser(): Resource<LoginResponse> {
+    override suspend fun createTestUser(): Resource<LoginResponse> {
         return try {
             val response = api.createTestUser()
-
             if (response.isSuccessful && response.body() != null) {
                 val testResponse = response.body()!!
-                if (testResponse.data != null) {
-                    val loginResponse = testResponse.data
-
-                    // Save auth data
-                    prefs.saveCompleteAuth(
-                        token = loginResponse.token,
-                        userId = loginResponse.user.id,
-                        email = loginResponse.user.email,
-                        name = loginResponse.user.name
-                    )
-
-                    Resource.Success(loginResponse)
-                } else {
-                    Resource.Error("Test user creation failed")
-                }
+                val loginResponse = testResponse.data ?: return Resource.Error("Test user creation failed")
+                prefs.saveCompleteAuth(
+                    token  = loginResponse.token,
+                    userId = loginResponse.user.id,
+                    email  = loginResponse.user.email,
+                    name   = loginResponse.user.name
+                )
+                Resource.Success(loginResponse)
             } else {
                 Resource.Error("Test user creation failed: ${response.message()}")
             }
@@ -149,11 +138,3 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 }
-
-// Data classes (if not already defined)
-data class LoginRequest(val email: String, val password: String)
-data class RegisterRequest(val email: String, val name: String, val password: String)
-data class UserResponse(val id: String, val email: String, val name: String)
-data class LoginResponse(val token: String, val user: UserResponse)
-data class HealthResponse(val status: String, val platform: String?, val database: String?)
-data class TestUserResponse(val success: Boolean, val message: String, val data: LoginResponse?)

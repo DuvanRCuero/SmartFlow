@@ -15,14 +15,15 @@ interface AuthApi {
     @GET("auth/me")
     suspend fun getProfile(): Response<UserResponse>
 
+    @POST("auth/logout")
+    suspend fun logout(): Response<Unit>
+
     @GET("health")
     suspend fun healthCheck(): Response<HealthResponse>
 
     @POST("test/create-user")
     suspend fun createTestUser(): Response<TestUserResponse>
 }
-
-// Data classes that match your backend
 @Serializable
 data class RegisterRequest(
     val email: String,
@@ -40,7 +41,9 @@ data class LoginRequest(
 data class UserResponse(
     val id: String,
     val email: String,
-    val name: String
+    val name: String,
+    val timeZone: String,
+    val createdAt: String
 )
 
 @Serializable

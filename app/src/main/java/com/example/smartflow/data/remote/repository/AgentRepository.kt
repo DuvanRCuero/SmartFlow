@@ -1,18 +1,13 @@
+// Create this file: data/remote/repository/AgentRepository.kt
 package com.example.smartflow.data.remote.repository
 
-import com.example.smartflow.data.remote.dto.AgentResponse
+import com.example.smartflow.data.remote.api.AgentResponse
+import com.example.smartflow.data.remote.api.AgentStatusResponse
 import com.example.smartflow.util.Resource
 
-/**
- * Interfaz para invocar al agente (LangChain) remoto mediante FastAPI.
- */
 interface AgentRepository {
-
-    /**
-     * Envía una consulta al agente LLM.
-     * @param query Texto libre de la pregunta que el usuario hace al chat/agent.
-     * @param taskId ID de la tarea en contexto (opcional; si se envía, el agente sabe en qué tarea contextualizar).
-     * @return AgentResponse, que incluye el campo "result" con el JSON retornado por el agente.
-     */
-    suspend fun runAgent(query: String, taskId: String?): Resource<AgentResponse>
+    suspend fun runAgent(query: String, taskId: String? = null): Resource<AgentResponse>
+    suspend fun getAgentStatus(taskId: String): Resource<AgentStatusResponse>
+    suspend fun stopAgent(taskId: String): Resource<Unit>
+    suspend fun getAgentHistory(): Resource<List<AgentResponse>>
 }

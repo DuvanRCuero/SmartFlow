@@ -3,6 +3,7 @@ package com.example.smartflow.presentation.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartflow.domain.repository.AuthRepository
+import com.example.smartflow.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -37,13 +38,20 @@ class SignupViewModel @Inject constructor(
     fun signup() {
         viewModelScope.launch {
             _uiState.value = SignupUiState.Loading
-            repo.register(_email.value, _password.value, _name.value)
-                .onSuccess {
-                    _uiState.value = SignupUiState.Success
-                }
-                .onFailure {
-                    _uiState.value = SignupUiState.Error(it.message ?: "Error inesperado")
-                }
+
+            when (val result =
+                repo.register(
+                    _email.value,
+                    _name.value,
+                    _password.value
+                )
+            ) {
+                is Resource.Success -> _uiState.value = SignupUiState.Success
+                is Resource.Error   -> _uiState.value =
+                    SignupUiState.Error(result.message)
+                else -> _uiState.value = SignupUiState.Idle
+            }
         }
     }
+
 }

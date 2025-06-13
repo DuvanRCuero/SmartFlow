@@ -43,7 +43,7 @@ import javax.inject.Singleton
 object AppModule {
 
     // Network Configuration - UPDATE WITH YOUR WINDOWS IP
-    private const val WINDOWS_IP = "192.168.1.105" // Replace with your IP from ipconfig
+    private const val WINDOWS_IP = "192.168.128.1"
     private const val BASE_URL_EMULATOR = "http://10.0.2.2:8000/"
     private const val BASE_URL_DEVICE = "http://$WINDOWS_IP:8000/"
 
