@@ -1,25 +1,39 @@
+// data/remote/api/TaskApi.kt
 package com.example.smartflow.data.remote.api
 
-import com.example.smartflow.data.remote.dto.TaskDto
-import com.example.smartflow.data.remote.dto.CreateTaskDto
-import com.example.smartflow.data.remote.dto.UpdateTaskDto
+import kotlinx.serialization.Serializable
 import retrofit2.Response
 import retrofit2.http.*
 
 interface TaskApi {
-
     @GET("tasks")
-    suspend fun getTasks(@Query("user_id") userId: String): List<TaskDto>
+    suspend fun getTasks(): Response<List<TaskResponse>>
 
-    @POST("tasks")
-    suspend fun createTask(@Body body: CreateTaskDto): TaskDto
-
-    @PUT("tasks/{id}")
-    suspend fun updateTask(
-        @Path("id") taskId: String,
-        @Body body: UpdateTaskDto
-    ): TaskDto
-
-    @DELETE("tasks/{id}")
-    suspend fun deleteTask(@Path("id") taskId: String): Response<Unit>
+    @POST("chat/windows")
+    suspend fun sendMessage(@Body request: ChatRequest): Response<ChatResponse>
 }
+
+@Serializable
+data class TaskResponse(
+    val id: String,
+    val title: String,
+    val description: String,
+    val status: String,
+    val priority: String,
+    val created_at: String,
+    val updated_at: String? = null
+)
+
+@Serializable
+data class ChatRequest(
+    val message: String
+)
+
+@Serializable
+data class ChatResponse(
+    val response: String,
+    val user_id: String,
+    val timestamp: String,
+    val platform: String? = null,
+    val mode: String? = null
+)

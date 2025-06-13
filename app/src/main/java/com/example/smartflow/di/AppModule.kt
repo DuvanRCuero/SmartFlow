@@ -33,6 +33,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.Interceptor
 import retrofit2.Retrofit
 import timber.log.Timber
 import javax.inject.Singleton
@@ -40,6 +41,23 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    companion object {
+        // Network Configuration - UPDATE WITH YOUR WINDOWS IP
+        private const val WINDOWS_IP = "192.168.56.1" 
+        private const val BASE_URL_EMULATOR = "http://10.0.2.2:8000/"
+        private const val BASE_URL_DEVICE = "http://$WINDOWS_IP:8000/"
+
+        private fun isEmulator(): Boolean {
+            return (android.os.Build.FINGERPRINT.startsWith("generic")
+                    || android.os.Build.FINGERPRINT.startsWith("unknown")
+                    || android.os.Build.MODEL.contains("google_sdk")
+                    || android.os.Build.MODEL.contains("Emulator")
+                    || android.os.Build.MODEL.contains("Android SDK built for x86"))
+        }
+
+        private val BASE_URL = if (isEmulator()) BASE_URL_EMULATOR else BASE_URL_DEVICE
+    }
 
     // ------------------------------------------------------------
     // 1) Base de datos local (Room) y UserDao
@@ -72,31 +90,66 @@ object AppModule {
     }
 
     // ------------------------------------------------------------
-    // 3) Retrofit + APIs remotas
+    // 3) Retrofit + APIs remotas with Authentication Interceptor
     // ------------------------------------------------------------
     @Provides @Singleton
     fun provideRetrofit(okHttp: OkHttpClient): Retrofit =
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8000/")
-            .client(okHttp)                    // ← usa el cliente con logging
+            .baseUrl(BASE_URL) // Use dynamic URL based on device type
+            .client(okHttp)
             .addConverterFactory(
-                Json.asConverterFactory("application/json".toMediaType())
+                Json {
+                    ignoreUnknownKeys = true
+                    coerceInputValues = true
+                }.asConverterFactory("application/json".toMediaType())
             )
             .build()
 
     @Provides @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(authPreferences: AuthPreferences): OkHttpClient {
         val builder = OkHttpClient.Builder()
 
+        // Add authentication interceptor
+        val authInterceptor = Interceptor { chain ->
+            val originalRequest = chain.request()
+
+            // Get token from preferences (this will be synchronous for simplicity)
+            // In production, you might want to handle this differently
+            val token = runCatching {
+                // You'll need to implement a synchronous way to get token
+                // or use a different approach for auth headers
+                authPreferences.getTokenSync() // You'll need to implement this
+            }.getOrNull()
+
+            val newRequest = if (!token.isNullOrEmpty()) {
+                originalRequest.newBuilder()
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+            } else {
+                originalRequest
+            }
+
+            chain.proceed(newRequest)
+        }
+
+        builder.addInterceptor(authInterceptor)
+
+        // Add logging only in debug
         if (BuildConfig.DEBUG) {
-            val logging = HttpLoggingInterceptor { message -> Timber.tag("OkHttp").d(message) }
+            val logging = HttpLoggingInterceptor { message ->
+                Timber.tag("SmartFlow-API").d(message)
+            }
             logging.level = HttpLoggingInterceptor.Level.BODY
             builder.addInterceptor(logging)
         }
+
+        // Add connection timeouts
+        builder.connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        builder.readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        builder.writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+
         return builder.build()
     }
-
-
 
     @Provides
     @Singleton

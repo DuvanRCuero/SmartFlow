@@ -1,91 +1,71 @@
-// app/src/main/java/com/example/smartflow/data/local/preferences/AuthPreferences.kt
-
+// data/local/preferences/AuthPreferences.kt - Add this method
 package com.example.smartflow.data.local.preferences
 
 import android.content.Context
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.*
-import java.io.IOException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
-/**
- * AuthPreferences: guarda el userId (y opcionalmente un token) en DataStore.
- * Ahora expone userIdFlow e isLoggedInFlow, y añadimos un helper getUserId().
- */
 class AuthPreferences(private val context: Context) {
 
-    // Delegado para crear un DataStore de Preferences
-    private val Context.dataStore by preferencesDataStore(name = "auth_prefs")
-
     companion object {
-        private val KEY_USER_ID = stringPreferencesKey("key_user_id")
-        private val KEY_JWT_TOKEN = stringPreferencesKey("key_jwt_token")
+        private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("auth_prefs")
+        private val TOKEN_KEY = stringPreferencesKey("auth_token")
+        private val USER_ID_KEY = stringPreferencesKey("user_id")
+        private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
+        private val USER_NAME_KEY = stringPreferencesKey("user_name")
     }
 
-    /**
-     * Flow que emite continuamente el userId (o "" si no hay ninguno).
-     */
-    val userIdFlow: Flow<String> = context.dataStore.data
-        .catch { exception ->
-            if (exception is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
+    // Existing async methods
+    suspend fun saveAuthToken(token: String) {
+        context.dataStore.edit { preferences ->
+            preferences[TOKEN_KEY] = token
+        }
+    }
+
+    suspend fun saveUserInfo(userId: String, email: String, name: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_ID_KEY] = userId
+            preferences[USER_EMAIL_KEY] = email
+            preferences[USER_NAME_KEY] = name
+        }
+    }
+
+    val authToken: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[TOKEN_KEY]
+    }
+
+    val userId: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_ID_KEY]
+    }
+
+    suspend fun clearAuth() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(TOKEN_KEY)
+            preferences.remove(USER_ID_KEY)
+            preferences.remove(USER_EMAIL_KEY)
+            preferences.remove(USER_NAME_KEY)
+        }
+    }
+
+    suspend fun isLoggedIn(): Boolean {
+        return authToken.first() != null
+    }
+
+    // ADD THIS METHOD for synchronous token access in OkHttp interceptor
+    fun getTokenSync(): String? {
+        return runBlocking {
+            try {
+                authToken.first()
+            } catch (e: Exception) {
+                null
             }
-        }
-        .map { prefs ->
-            prefs[KEY_USER_ID] ?: ""
-        }
-
-    /**
-     * Flow que emite true si userIdFlow no está vacío, false en caso contrario.
-     */
-    val isLoggedInFlow: Flow<Boolean> = userIdFlow.map { it.isNotBlank() }
-
-    /**
-     * Helper para leer “una sola vez” el userId actual.
-     * Esto simplifica a que tus repositorios sigan llamando a prefs.getUserId().
-     */
-    suspend fun getUserId(): String {
-        return userIdFlow.first()
-    }
-
-    /**
-     * Guarda (o actualiza) el userId en DataStore.
-     */
-    suspend fun saveUserId(userId: String) {
-        context.dataStore.edit { prefs ->
-            prefs[KEY_USER_ID] = userId
-        }
-    }
-
-    /**
-     * (Opcional) Guarda un token JWT en DataStore.
-     */
-    suspend fun saveToken(token: String) {
-        context.dataStore.edit { prefs ->
-            prefs[KEY_JWT_TOKEN] = token
-        }
-    }
-
-    /**
-     * (Opcional) Obtiene el token JWT guardado o "" si no hay ninguno.
-     */
-    suspend fun getToken(): String {
-        return context.dataStore.data
-            .map { prefs -> prefs[KEY_JWT_TOKEN] ?: "" }
-            .first()
-    }
-
-    /**
-     * Borra todos los datos de sesión (userId y token).
-     */
-    suspend fun clearUserData() {
-        context.dataStore.edit { prefs ->
-            prefs.clear()
         }
     }
 }
