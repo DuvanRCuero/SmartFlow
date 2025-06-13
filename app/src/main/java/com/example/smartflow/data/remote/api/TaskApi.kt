@@ -32,12 +32,13 @@ interface TaskApi {
 data class TaskResponse(
     val id: String,
     val title: String,
-    val description: String,
-    val status: String,
-    val priority: String,
-    val created_at: String,
-    val updated_at: String? = null,
-    val user_id: String? = null
+    val description: String?,
+    val priority: String, // "low", "medium", "high"
+    val status: String,   // "pending", "in_progress", "completed", "cancelled"
+    val dueDate: String?, // ISO date string
+    val completedAt: String?, // ISO date string
+    val createdAt: String,    // ISO date string
+    val updatedAt: String     // ISO date string
 )
 
 @Serializable

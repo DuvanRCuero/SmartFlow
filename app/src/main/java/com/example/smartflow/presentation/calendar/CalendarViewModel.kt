@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,15 +15,11 @@ class CalendarViewModel : ViewModel() {
     private val _ui = MutableStateFlow(
         CalendarUiState(
             selectedDay = Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
-            events = listOf(
-                Event("1", "Project Meeting", "1:30 – 2:30 PM", false),
-                Event("2", "Sprint 21 Review", "11:30 – 12:30 AM", true)
-            )
+            events = getSampleEvents()
         )
     )
-    val ui: StateFlow<CalendarUiState> = _ui
+    val ui: StateFlow<CalendarUiState> = _ui.asStateFlow()
 
-    // Progress indicators
     val monthProgress: StateFlow<Float> = _ui.map { state ->
         val calendar = Calendar.getInstance()
         val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
@@ -37,7 +34,7 @@ class CalendarViewModel : ViewModel() {
     val weekProgress: StateFlow<Float> = _ui.map { state ->
         val calendar = Calendar.getInstance()
         val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        (dayOfWeek - 1).toFloat() / 6f // Sunday = 1, so we subtract 1
+        (dayOfWeek - 1).toFloat() / 6f
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -45,8 +42,9 @@ class CalendarViewModel : ViewModel() {
     )
 
     val dayEvents: StateFlow<List<Event>> = _ui.map { state ->
-        // Filter events for selected day (simplified - in real app you'd filter by actual date)
-        state.events
+        state.events.filter { event ->
+            state.selectedDay in 15..17
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -55,8 +53,6 @@ class CalendarViewModel : ViewModel() {
 
     fun onDaySelected(day: Int) {
         _ui.value = _ui.value.copy(selectedDay = day)
-        // TODO: Load real events for the selected day
-        // In a real implementation, you would fetch events from repository
     }
 
     fun getCurrentMonth(): String {
@@ -79,6 +75,61 @@ class CalendarViewModel : ViewModel() {
     fun getFirstDayOfMonth(): Int {
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.DAY_OF_MONTH, 1)
-        return calendar.get(Calendar.DAY_OF_WEEK) - 1 // Convert to 0-based index
+        return calendar.get(Calendar.DAY_OF_WEEK) - 1
+    }
+
+    private fun getSampleEvents(): List<Event> {
+        return listOf(
+            Event(
+                id = "1",
+                title = "Project Meeting",
+                time = "1:30 – 2:30 PM",
+                isAlert = false,
+                description = "Discuss Q4 roadmap and deliverables"
+            ),
+            Event(
+                id = "2",
+                title = "Sprint 21 Review",
+                time = "11:30 AM – 12:30 PM",
+                isAlert = true,
+                description = "Review sprint accomplishments and blockers"
+            ),
+            Event(
+                id = "3",
+                title = "Design System Workshop",
+                time = "3:00 – 4:30 PM",
+                isAlert = false,
+                description = "Collaborative design system improvements"
+            ),
+            Event(
+                id = "4",
+                title = "Client Call - SmartFlow Demo",
+                time = "10:00 – 11:00 AM",
+                isAlert = true,
+                description = "Present new features to key stakeholders"
+            )
+        )
+    }
+
+    fun addEvent(event: Event) {
+        val currentEvents = _ui.value.events.toMutableList()
+        currentEvents.add(event)
+        _ui.value = _ui.value.copy(events = currentEvents)
+    }
+
+    fun removeEvent(eventId: String) {
+        val currentEvents = _ui.value.events.filterNot { it.id == eventId }
+        _ui.value = _ui.value.copy(events = currentEvents)
+    }
+
+    fun toggleEventAlert(eventId: String) {
+        val currentEvents = _ui.value.events.map { event ->
+            if (event.id == eventId) {
+                event.copy(isAlert = !event.isAlert)
+            } else {
+                event
+            }
+        }
+        _ui.value = _ui.value.copy(events = currentEvents)
     }
 }

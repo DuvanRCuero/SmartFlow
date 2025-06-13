@@ -1,129 +1,175 @@
 package com.example.smartflow.presentation.task
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.smartflow.presentation.common.SfBottomBar
-
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.example.smartflow.presentation.common.SmartFlowCard
+import com.example.smartflow.presentation.common.SfBottomBar
 import com.example.smartflow.presentation.navigation.SfDestination
-import com.example.smartflow.presentation.theme.*
-import com.example.smartflow.ui.theme.SmartFlowButtonBlue
-import com.example.smartflow.ui.theme.SmartFlowTeal
+
+
+data class TaskUiState(
+    val tasks: List<Task> = emptyList()
+)
+
+class TasksViewModel : ViewModel() {
+    private val _ui = MutableStateFlow(TaskUiState())
+    val ui: StateFlow<TaskUiState> = _ui
+
+    fun addNewTask() { /* Implementación */ }
+    fun toggleTaskComplete(taskId: String) { /* Implementación */ }
+    fun deleteTask(taskId: String) { /* Implementación */ }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
-    vm: TaskViewModel = viewModel(),
+    onBack: () -> Unit,
     onSelectBottom: (SfDestination) -> Unit,
-    onBack: () -> Unit
+    vm: TasksViewModel = viewModel()
 ) {
-    val ui by vm.ui.collectAsState()
+    val uiState by vm.ui.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { /* vacío (logo ya en app bar?) */ },
+                title = {
+                    Text(
+                        "Tasks",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, null)
+                        Icon(
+                            Icons.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
-        bottomBar = { SfBottomBar(SfDestination.Tasks, onSelectBottom) }
-    ) { pv ->
-        Column(
+        bottomBar = {
+            SfBottomBar(
+                selected = SfDestination.Tasks,
+                onDestinationClick = onSelectBottom
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { vm.addNewTask() },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Task")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        LazyColumn(
             modifier = Modifier
-                .padding(pv)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (uiState.tasks.isNotEmpty()) {
+                items(uiState.tasks) { task ->
+                    TaskItem(
+                        task = task,
+                        onToggleComplete = { vm.toggleTaskComplete(task.id) },
+                        onDeleteTask = { vm.deleteTask(task.id) }
+                    )
+                }
+            } else {
+                item {
+                    EmptyTasksMessage()
+                }
+            }
+        }
+    }
+}
 
-            // Header
-            Text(
-                "Tasks Completed",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Text(
-                text = ui.completed.toString(),
-                style = MaterialTheme.typography.displaySmall,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Text(
-                text = "Past 5 weeks  ${if (ui.deltaPercent >= 0) "+" else ""}${ui.deltaPercent}%",
-                color = SmartFlowTeal,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+@Composable
+private fun TaskItem(
+    task: Task,
+    onToggleComplete: () -> Unit,
+    onDeleteTask: () -> Unit
+) {
+    SmartFlowCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = { onToggleComplete() }
             )
 
-            // Chart placeholder
-            Canvas(
-                Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .padding(16.dp)
-            ) {
-                // TODO: reemplazar con librería real
-                drawLine(
-                    color = SmartFlowButtonBlue,
-                    start = Offset(0f, size.height * 0.7f),
-                    end = Offset(size.width, size.height * 0.3f),
-                    strokeWidth = 6f
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
                 )
+                if (task.description.isNotEmpty()) {
+                    Text(
+                        text = task.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
             }
+        }
+    }
+}
 
-            // Tabs Week 1 – Week 5
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+@Composable
+private fun EmptyTasksMessage() {
+    SmartFlowCard {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                repeat(5) { i ->
-                    Text("Week ${i + 1}", style = MaterialTheme.typography.labelLarge)
-                }
-            }
-
-            Divider(Modifier.padding(vertical = 12.dp))
-
-            // Insights
-            ui.insights.forEach { ins ->
-                SmartFlowCard(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                ) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(ins.title, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                ins.subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-                        Icon(Icons.Outlined.Add, null) // + icon en Figma
-                    }
-                }
+                Text(
+                    text = "📝",
+                    style = MaterialTheme.typography.headlineLarge
+                )
+                Text(
+                    text = "No tasks yet",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "Tap the + button to create your first task",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
             }
         }
     }

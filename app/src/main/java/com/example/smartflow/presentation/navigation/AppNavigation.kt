@@ -1,118 +1,96 @@
-// presentation/navigation/AppNavigation.kt
 package com.example.smartflow.presentation.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.smartflow.domain.repository.AuthRepository
-import com.example.smartflow.presentation.auth.SignupScreen
-import com.example.smartflow.presentation.chat.ChatScreen
-import com.example.smartflow.presentation.home.HomeScreen
-import com.example.smartflow.presentation.login.LoginScreen
 import com.example.smartflow.presentation.calendar.CalendarScreen
+import com.example.smartflow.presentation.home.HomeScreen
 import com.example.smartflow.presentation.productivity.ProductivityScreen
 import com.example.smartflow.presentation.task.TaskScreen
 
 @Composable
 fun AppNavigation(
-    authRepository: AuthRepository,
     navController: NavHostController = rememberNavController()
 ) {
-    // ➊ Collect the reactive login state
-    val isLoggedIn by authRepository
-        .isLoggedInFlow()
-        .collectAsState(initial = false)
-
-    // ➋ Choose start destination
-    val startDestination = if (isLoggedIn)
-        SfDestination.Home.route
-    else
-        AuthDestination.Login.route
-
     NavHost(
-        navController    = navController,
-        startDestination = startDestination
+        navController = navController,
+        startDestination = SfDestination.Home.route
     ) {
-        /* -------- Auth Screens -------- */
-        composable(AuthDestination.Login.route) {
-            LoginScreen(
-                onSuccess = {
-                    navController.navigate(SfDestination.Home.route) {
-                        popUpTo(AuthDestination.Login.route) { inclusive = true }
-                    }
-                },
-                onNavigateToSignup = {
-                    navController.navigate(AuthDestination.Signup.route)
-                }
-            )
-        }
-
-        composable(AuthDestination.Signup.route) {
-            SignupScreen(
-                onSuccess = {
-                    navController.navigate(SfDestination.Home.route) {
-                        popUpTo(AuthDestination.Signup.route) { inclusive = true }
-                    }
-                },
-                onNavigateToLogin = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        /* -------- Main App Screens -------- */
+        // Home Screen (Landing page)
         composable(SfDestination.Home.route) {
-            HomeScreen(onSelectBottom = { destination ->
-                navController.navigate(destination.route) {
-                    popUpTo(navController.graph.startDestinationId) { saveState = true }
-                    launchSingleTop = true
-                    restoreState     = true
-                }
-            })
-        }
-
-        composable(SfDestination.Chat.route) {
-            ChatScreen(
-                onNavigateBack  = { navController.popBackStack() },
-                onSelectBottom  = { destination ->
+            HomeScreen(
+                onSelectBottom = { destination: SfDestination ->
                     navController.navigate(destination.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        popUpTo(SfDestination.Home.route) {
+                            saveState = true
+                        }
                         launchSingleTop = true
-                        restoreState     = true
+                        restoreState = true
                     }
+                },
+                onNavigateToTasks = {
+                    navController.navigate(SfDestination.Tasks.route)
+                },
+                onNavigateToCalendar = {
+                    navController.navigate(SfDestination.Calendar.route)
+                },
+                onNavigateToProductivity = {
+                    navController.navigate(SfDestination.Productivity.route)
                 }
             )
         }
 
-        composable(SfDestination.Calendar.route) {
-            CalendarScreen(onBack = { navController.popBackStack() })
-        }
-
+        // Tasks Screen
         composable(SfDestination.Tasks.route) {
             TaskScreen(
-                onBack         = { navController.popBackStack() },
-                onSelectBottom = { destination ->
+                onBack = {
+                    navController.navigateUp()
+                },
+                onSelectBottom = { destination: SfDestination ->
                     navController.navigate(destination.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        popUpTo(SfDestination.Home.route) {
+                            saveState = true
+                        }
                         launchSingleTop = true
-                        restoreState     = true
+                        restoreState = true
                     }
                 }
             )
         }
 
+        // Calendar Screen
+        composable(SfDestination.Calendar.route) {
+            CalendarScreen(
+                onBack = {
+                    navController.navigateUp()
+                },
+                onSelectBottom = { destination: SfDestination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(SfDestination.Home.route) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+
+        // Productivity Screen
         composable(SfDestination.Productivity.route) {
             ProductivityScreen(
-                onBack         = { navController.popBackStack() },
-                onSelectBottom = { destination ->
+                onBack = {
+                    navController.navigateUp()
+                },
+                onSelectBottom = { destination: SfDestination ->
                     navController.navigate(destination.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        popUpTo(SfDestination.Home.route) {
+                            saveState = true
+                        }
                         launchSingleTop = true
-                        restoreState     = true
+                        restoreState = true
                     }
                 }
             )

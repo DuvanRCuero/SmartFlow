@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -105,6 +105,7 @@ fun CalendarView(
     }
 }
 
+
 @Composable
 fun EventItem(
     title: String,
@@ -112,17 +113,8 @@ fun EventItem(
     isAlert: Boolean = false
 ) {
     SmartFlowCard(Modifier.fillMaxWidth()) {
-        EventItemRowWrapper(title, time, isAlert)
+        EventItemRow(title, time, isAlert)
     }
-}
-
-@Composable
-fun EventItemRowWrapper(
-    title: String,
-    time: String,
-    isAlert: Boolean = false
-) {
-    EventItemRow(title, time, isAlert)
 }
 
 @Composable
@@ -137,28 +129,153 @@ fun EventItemRow(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(time, style = MaterialTheme.typography.bodyMedium, color = Gray)
+        // Event indicator dot
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(
+                    color = if (isAlert) MaterialTheme.colorScheme.error else SmartFlowTeal,
+                    shape = CircleShape
+                )
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = time,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
         }
 
         if (!isAlert) {
             IconButton(
-                onClick = { /* TODO: acción */ },
+                onClick = { /* TODO: Add action */ },
                 modifier = Modifier
                     .size(32.dp)
                     .background(SmartFlowTeal, CircleShape)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add", tint = White, modifier = Modifier.size(16.dp))
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         } else {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(SmartFlowButtonBlue, CircleShape),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.error
             ) {
-                Text("!", color = White)
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "!",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Mini calendar component for use in other screens
+@Composable
+fun MiniCalendarCard(
+    selectedDay: Int,
+    onDaySelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    SmartFlowCard(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Calendar",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Simplified week view
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                (15..21).forEach { day ->
+                    val isSelected = day == selectedDay
+                    Surface(
+                        modifier = Modifier
+                            .size(32.dp),
+                        shape = CircleShape,
+                        color = if (isSelected) SmartFlowButtonBlue else Color.Transparent,
+                        onClick = { onDaySelected(day) }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = day.toString(),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Event count indicator for dashboard
+@Composable
+fun EventCountCard(
+    totalEvents: Int,
+    upcomingEvents: Int,
+    modifier: Modifier = Modifier
+) {
+    SmartFlowCard(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Events Today",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = totalEvents.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SmartFlowButtonBlue
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Upcoming",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = upcomingEvents.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SmartFlowTeal
+                )
             }
         }
     }

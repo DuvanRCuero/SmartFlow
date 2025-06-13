@@ -26,10 +26,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // ← replace with your real LAN IP for physical devices
-    private const val WINDOWS_IP        = "192.168.1.42"
+    // Using ADB port forwarding for both emulator and device
     private const val BASE_URL_EMULATOR = "http://10.0.2.2:8000/"
-    private const val BASE_URL_DEVICE   = "http://$WINDOWS_IP:8000/"
+    private const val BASE_URL_DEVICE   = "http://localhost:8000/"
 
     private fun isEmulator() =
         Build.FINGERPRINT.startsWith("generic") ||

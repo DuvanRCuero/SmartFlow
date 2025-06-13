@@ -1,53 +1,88 @@
-// SfBottomBar.kt
 package com.example.smartflow.presentation.common
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.outlined.Analytics
+import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import com.example.smartflow.presentation.navigation.SfDestination
-import com.example.smartflow.ui.theme.SmartFlowButtonBlue
-import com.example.smartflow.ui.theme.White
 
 @Composable
 fun SfBottomBar(
     selected: SfDestination,
-    onDestinationClick: (SfDestination) -> Unit = {}
+    onDestinationClick: (SfDestination) -> Unit
 ) {
     NavigationBar(
-        containerColor = White.copy(alpha = 0.1f)
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
     ) {
-        SfDestination.entries.forEach { destination ->
+        BottomBarItem.entries.forEach { item ->
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = getIconForDestination(destination, selected == destination),
-                        contentDescription = destination.label
+                        imageVector = if (selected == item.destination) item.selectedIcon else item.unselectedIcon,
+                        contentDescription = item.label,
+                        modifier = Modifier.size(24.dp)
                     )
                 },
-                label = { Text(destination.label) },
-                selected = selected == destination,
-                onClick = { onDestinationClick(destination) },
+                label = {
+                    Text(
+                        text = item.label,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                selected = selected == item.destination,
+                onClick = { onDestinationClick(item.destination) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = SmartFlowButtonBlue,
-                    selectedTextColor = SmartFlowButtonBlue,
-                    unselectedIconColor = White.copy(alpha = 0.6f),
-                    unselectedTextColor = White.copy(alpha = 0.6f),
-                    indicatorColor = SmartFlowButtonBlue.copy(alpha = 0.2f)
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 )
             )
         }
     }
 }
 
-private fun getIconForDestination(destination: SfDestination, isSelected: Boolean): ImageVector {
-    return when (destination) {
-        SfDestination.Home -> if (isSelected) Icons.Filled.Home else Icons.Outlined.Home
-        SfDestination.Chat -> if (isSelected) Icons.Filled.Chat else Icons.Outlined.Chat
-        SfDestination.Calendar -> if (isSelected) Icons.Filled.CalendarToday else Icons.Outlined.CalendarToday
-        SfDestination.Tasks -> if (isSelected) Icons.Filled.Task else Icons.Outlined.Task
-        SfDestination.Productivity -> if (isSelected) Icons.Filled.Analytics else Icons.Outlined.Analytics
-    }
+private enum class BottomBarItem(
+    val destination: SfDestination,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
+    val label: String
+) {
+    HOME(
+        destination = SfDestination.Home,
+        selectedIcon = Icons.Filled.Home,
+        unselectedIcon = Icons.Outlined.Home,
+        label = "Home"
+    ),
+    TASKS(
+        destination = SfDestination.Tasks,
+        selectedIcon = Icons.Filled.TaskAlt,
+        unselectedIcon = Icons.Outlined.TaskAlt,
+        label = "Tasks"
+    ),
+    CALENDAR(
+        destination = SfDestination.Calendar,
+        selectedIcon = Icons.Filled.CalendarToday,
+        unselectedIcon = Icons.Outlined.CalendarToday,
+        label = "Calendar"
+    ),
+    PRODUCTIVITY(
+        destination = SfDestination.Productivity,
+        selectedIcon = Icons.Filled.Analytics,
+        unselectedIcon = Icons.Outlined.Analytics,
+        label = "Productivity"
+    )
 }

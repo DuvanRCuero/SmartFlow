@@ -1,4 +1,3 @@
-// domain/repository/AuthRepository.kt
 package com.example.smartflow.domain.repository
 
 import com.example.smartflow.data.remote.api.HealthResponse
