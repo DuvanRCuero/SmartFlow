@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartflow.data.remote.dto.AgentResponse
 import com.example.smartflow.data.remote.repository.AgentRepository
 import com.example.smartflow.util.Resource
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 
 fun <T, R> Resource<T>.map(transform: (T) -> R): Resource<R> {
@@ -22,9 +24,24 @@ fun <T, R> Resource<T>.map(transform: (T) -> R): Resource<R> {
 }
 
 fun parseResponseToMap(response: String): Map<String, Any> {
-    val gson = Gson()
-    val type = object : TypeToken<Map<String, Any>>() {}.type
-    return gson.fromJson(response, type)
+    return try {
+        val json = Json { ignoreUnknownKeys = true }
+        val jsonElement = json.parseToJsonElement(response)
+
+        // Convert JsonObject to Map<String, Any>
+        if (jsonElement is JsonObject) {
+            jsonElement.entries.associate { (key, value) ->
+                key to when {
+                    value.jsonPrimitive.isString -> value.jsonPrimitive.content
+                    else -> value.toString().removeSurrounding("\"")
+                }
+            }
+        } else {
+            emptyMap()
+        }
+    } catch (e: Exception) {
+        emptyMap()
+    }
 }
 
 @HiltViewModel

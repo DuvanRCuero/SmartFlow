@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android") version "2.48"
     id("kotlin-parcelize")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21" // Added this plugin
 }
 
 android {
@@ -60,9 +61,7 @@ android {
     }
 }
 
-// ↓ Add this block here, at the same level as `android {}`:
 hilt {
-    // disable the JavaPoet-based aggregating task to avoid the missing-method crash
     enableAggregatingTask = false
 }
 
@@ -89,23 +88,22 @@ dependencies {
 
     // Hilt for Dependency Injection
     implementation(libs.hilt.android)
-    implementation(libs.androidx.databinding.adapters)
-    implementation(libs.navigation.compose)
-    implementation(libs.androidx.room.runtime.android)
-    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.material3)
+    ksp(libs.hilt.compiler)
 
     // Room Database
     implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
-    // Retrofit for Network Requests
+    // Retrofit for Network Requests (using Kotlinx Serialization)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
+    implementation(libs.retrofit2.kotlinx.serialization.converter) // Using kotlinx serialization
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+
+    // Kotlinx Serialization
+    implementation(libs.kotlinx.serialization.json)
 
     // Coroutines for Asynchronous Programming
     implementation(libs.kotlinx.coroutines.android)
@@ -119,8 +117,6 @@ dependencies {
 
     // Splash Screen API
     implementation(libs.androidx.core.splashscreen)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.retrofit2.kotlinx.serialization.converter)
 
     // Testing
     testImplementation(libs.junit)
@@ -131,9 +127,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // ---- Timber ----
-    implementation(libs.timber)
-
-    // ---- Retrofit HTTP logging (only for Debug) ----
+    // HTTP logging (Debug only)
     debugImplementation(libs.logging.interceptor.v500alpha12)
 }
