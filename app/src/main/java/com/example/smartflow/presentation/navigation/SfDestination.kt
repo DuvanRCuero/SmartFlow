@@ -4,5 +4,6 @@ enum class SfDestination(val route: String) {
     Home("home"),
     Tasks("tasks"),
     Calendar("calendar"),
-    Productivity("productivity")
+    Productivity("productivity"),
+    Chat("chat")
 }

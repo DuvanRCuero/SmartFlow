@@ -84,5 +84,11 @@ private enum class BottomBarItem(
         selectedIcon = Icons.Filled.Analytics,
         unselectedIcon = Icons.Outlined.Analytics,
         label = "Productivity"
+    ),
+    CHAT(
+        destination = SfDestination.Chat,
+        selectedIcon = Icons.Filled.Analytics, // Placeholder, replace with actual chat icon
+        unselectedIcon = Icons.Outlined.Analytics, // Placeholder, replace with actual chat icon
+        label = "Chat"
     )
 }

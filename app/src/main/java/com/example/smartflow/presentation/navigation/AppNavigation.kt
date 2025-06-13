@@ -9,6 +9,7 @@ import com.example.smartflow.presentation.calendar.CalendarScreen
 import com.example.smartflow.presentation.home.HomeScreen
 import com.example.smartflow.presentation.productivity.ProductivityScreen
 import com.example.smartflow.presentation.task.TaskScreen
+import com.example.smartflow.presentation.chat.ChatScreen
 
 @Composable
 fun AppNavigation(
@@ -38,6 +39,9 @@ fun AppNavigation(
                 },
                 onNavigateToProductivity = {
                     navController.navigate(SfDestination.Productivity.route)
+                },
+                onNavigateToChat = {
+                    navController.navigate(SfDestination.Chat.route)
                 }
             )
         }
@@ -81,6 +85,24 @@ fun AppNavigation(
         // Productivity Screen
         composable(SfDestination.Productivity.route) {
             ProductivityScreen(
+                onBack = {
+                    navController.navigateUp()
+                },
+                onSelectBottom = { destination: SfDestination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(SfDestination.Home.route) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+
+        // Chat Screen
+        composable(SfDestination.Chat.route) {
+            ChatScreen(
                 onBack = {
                     navController.navigateUp()
                 },

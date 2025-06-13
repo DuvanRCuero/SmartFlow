@@ -31,9 +31,10 @@ import com.example.smartflow.ui.theme.*
 @Composable
 fun HomeScreen(
     onSelectBottom: (SfDestination) -> Unit,
-    onNavigateToTasks: () -> Unit = {},
-    onNavigateToCalendar: () -> Unit = {},
-    onNavigateToProductivity: () -> Unit = {},
+    onNavigateToTasks: () -> Unit,
+    onNavigateToCalendar: () -> Unit,
+    onNavigateToProductivity: () -> Unit,
+    onNavigateToChat: () -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
     val uiState by vm.ui.collectAsState()

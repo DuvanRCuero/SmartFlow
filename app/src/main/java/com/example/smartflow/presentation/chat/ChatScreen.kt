@@ -14,12 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartflow.presentation.common.SmartFlowCard
-
+import com.example.smartflow.presentation.common.SfBottomBar
+import com.example.smartflow.presentation.navigation.SfDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     onBack: () -> Unit,
+    onSelectBottom: (SfDestination) -> Unit,
     vm: ChatViewModel = viewModel()
 ) {
     val uiState by vm.ui.collectAsState()
@@ -46,6 +48,12 @@ fun ChatScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
+            )
+        },
+        bottomBar = {
+            SfBottomBar(
+                selected = SfDestination.Chat,
+                onDestinationClick = onSelectBottom
             )
         },
         containerColor = MaterialTheme.colorScheme.background
